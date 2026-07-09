@@ -501,6 +501,8 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .result-frame{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#000;max-width:320px;margin:0 auto;}
 .result-frame img, .result-frame svg{width:100%;display:block;}
 .result-frame.locked .result-img{filter:blur(14px) saturate(0.8);}
+.result-frame.locked.has-real-preview .result-img{filter:none;}
+.result-frame.has-real-preview .result-img img{width:100%;display:block;}
 .generating-state{max-width:320px;margin:10px auto 0;text-align:center;padding:34px 20px;}
 .watermark{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
@@ -513,7 +515,14 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
   border:2px solid rgba(255,255,255,.6);padding:6px 18px;
 }
 .result-frame.unlocked .watermark{display:none;}
+.result-frame.has-real-preview .watermark{display:none;}
 .result-frame.unlocked .result-img{filter:none;}
+.preview-pending-note{
+  position:absolute;bottom:10px;left:0;right:0;text-align:center;
+  font-size:11px;color:rgba(255,255,255,.75);letter-spacing:.02em;
+  display:none;
+}
+.result-frame.preview-loading .preview-pending-note{display:block;}
 .lock-chip{
   position:absolute;top:12px;left:12px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);
   padding:5px 11px;border-radius:999px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;
@@ -522,9 +531,13 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 
 .price-card{background:var(--card-2);border:1px solid var(--border);border-radius:18px;padding:28px;}
 .price-old{color:var(--muted-2);text-decoration:line-through;font-size:16px;}
-.price-row{display:flex;align-items:baseline;gap:10px;margin:6px 0 4px;}
-.price-new{font-size:44px;font-weight:800;letter-spacing:-.02em;}
-.price-tag{background:var(--green);color:#04140c;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;letter-spacing:.03em;}
+.price-row{display:flex;align-items:baseline;gap:10px;margin:6px 0 4px;flex-wrap:wrap;}
+.price-new{font-size:44px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;}
+.price-tag{background:var(--green);color:#04140c;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;letter-spacing:.03em;white-space:nowrap;}
+@media (max-width:380px){
+  .price-new{font-size:34px;}
+  .price-card{padding:22px;}
+}
 .price-list{list-style:none;padding:0;margin:20px 0;display:flex;flex-direction:column;gap:10px;}
 .price-list li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);}
 .price-list svg{color:var(--green);flex-shrink:0;}
@@ -561,6 +574,17 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .modal-success{text-align:center;padding:10px 0;display:none;}
 .modal-success.visible{display:block;}
 .modal-success .check-circle{width:64px;height:64px;border-radius:50%;background:var(--green-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--green);}
+
+/* embedded checkout (Payment Brick) + Pix */
+#paymentBrickContainer{margin-bottom:6px;}
+#paymentBrickContainer:empty{min-height:0;}
+.pix-box{background:var(--card-2);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;margin-bottom:14px;}
+.pix-qr-img{width:170px;height:170px;margin:0 auto 12px;display:block;border-radius:10px;background:#fff;padding:8px;}
+.pix-hint{font-size:12.5px;color:var(--muted);margin:0 0 12px;}
+.pix-copy-row{display:flex;gap:8px;}
+.pix-copy-input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:11.5px;font-family:inherit;}
+.pix-copy-row .btn{padding:10px 16px;font-size:13px;flex-shrink:0;}
+.pix-status{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--muted-2);margin:16px 0 0;}
 
 /* faq */
 .faq-split{display:grid;grid-template-columns:.75fr 1.25fr;gap:56px;align-items:start;}
@@ -1045,12 +1069,13 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
               </svg>
             </div>
             <div class="watermark"><span>PREVIEW</span></div>
+            <div class="preview-pending-note">Preparando sua prévia real...</div>
           </div>
           <div class="price-card">
             <div class="price-old">R$ 29,90</div>
             <div class="price-row">
               <span class="price-new">R$ 9,90</span>
-              <span class="price-tag">CUSTO ÚNICO</span>
+              <span class="price-tag">67% OFF</span>
             </div>
             <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Pagamento único — sem assinatura, sem cobrança recorrente.</p>
             <ul class="price-list">
@@ -1088,12 +1113,31 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
     </button>
     <div id="modalPayForm">
       <h3>Pagamento único</h3>
-      <p class="desc">Você será redirecionado para o ambiente seguro do Mercado Pago para concluir o pagamento.</p>
+      <p class="desc" id="modalPayDesc">Pague direto por aqui, sem sair do site — cartão ou Pix.</p>
       <div class="pay-total">
         <span>Total</span>
         <strong>R$ 9,90</strong>
       </div>
-      <button class="btn btn-primary btn-block" id="payBtn">Pagar com Mercado Pago</button>
+
+      <!-- Checkout embutido (Payment Brick do Mercado Pago) — cartão e Pix sem sair do site -->
+      <div id="paymentBrickContainer"></div>
+
+      <!-- Bloco do Pix: QR code + copia-e-cola, exibido após o cliente escolher Pix no Brick -->
+      <div class="pix-box" id="pixBox" style="display:none;">
+        <img class="pix-qr-img" id="pixQrImg" alt="QR Code Pix">
+        <p class="pix-hint">Escaneie o QR Code com o app do seu banco, ou copie o código abaixo:</p>
+        <div class="pix-copy-row">
+          <input type="text" class="pix-copy-input" id="pixCopyInput" readonly>
+          <button type="button" class="btn btn-ghost" id="pixCopyBtn">Copiar</button>
+        </div>
+        <p class="pix-status" id="pixStatus">
+          <span class="live-dot-sm"></span> Aguardando confirmação do pagamento…
+        </p>
+      </div>
+
+      <!-- Fallback: só aparece automaticamente se o checkout embutido não puder ser carregado -->
+      <button class="btn btn-primary btn-block" id="payBtn" style="display:none;">Pagar com Mercado Pago</button>
+
       <div class="modal-lock-note">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="currentColor" stroke-width="1.8"/></svg>
         Pagamento único. Sem assinatura, sem renovação automática.
@@ -1104,7 +1148,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
       <div class="loading-ring" style="width:64px;height:64px;">
         <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="#28282c" stroke-width="4"/><circle cx="25" cy="25" r="20" fill="none" stroke="#2fe38b" stroke-width="4" stroke-dasharray="90 200" stroke-linecap="round"/></svg>
       </div>
-      <p style="color:var(--muted);font-size:14px;margin-top:14px;">Redirecionando para o Mercado Pago…</p>
+      <p style="color:var(--muted);font-size:14px;margin-top:14px;" id="modalProcessingText">Confirmando seu pagamento…</p>
     </div>
     <div class="modal-success" id="modalSuccess">
       <div class="check-circle">
@@ -1117,6 +1161,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
   </div>
 </div>
 
+<script src="https://sdk.mercadopago.com/js/v2"></script>
 <script>
 // ---------- live counter ----------
 (function(){
@@ -1316,10 +1361,19 @@ function fillLoopTrack(track, buildOneCopyHtml){
 
   var silhouetteSvg = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#1b1b1e"/><circle cx="50" cy="38" r="18" fill="#2a2a2e"/><path d="M20 90C20 65 32 55 50 55C68 55 80 65 80 90Z" fill="#2a2a2e"/></svg>';
 
+  // Captura o markup ORIGINAL da ilustração genérica logo no carregamento da
+  // página (antes de qualquer prévia real substituir o conteúdo). Fazer isso
+  // de forma preguiçosa (só no primeiro "Começar de novo") era um problema:
+  // se o usuário já tivesse recebido uma prévia real antes de clicar em
+  // restart, a gente acabava "salvando" a prévia como se fosse o original.
+  var originalResultImgHtml = document.querySelector('#resultFrame .result-img').innerHTML;
+
   // ---- estado real do pedido (integra com o backend) ----
   var currentOrderId = null;
   var lastFullImage = null;
   var paidPollInterval = null;
+  var lastPreviewImage = null;
+  var previewPollInterval = null;
 
   var genErrorEl = document.getElementById('genError');
   function showGenErrorInline(msg){
@@ -1627,6 +1681,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
         }
         currentOrderId = res.data.orderId;
         orderReady = true;
+        pollPreviewStatus(currentOrderId);
       })
       .catch(function(){
         orderFailed = true;
@@ -1634,9 +1689,50 @@ function fillLoopTrack(track, buildOneCopyHtml){
       });
   }
 
+  // ---- prévia real (barata, borrada + marca d'água) ----
+  // Faz polling de GET /orders/:id só até a prévia ficar pronta (ou falhar).
+  // É independente do polling pós-pagamento (pollUntilPaid) — este aqui só
+  // busca a prévia BLOQUEADA, nunca a imagem final em alta qualidade.
+  function pollPreviewStatus(orderId){
+    var attempts = 0;
+    if(previewPollInterval) clearInterval(previewPollInterval);
+    previewPollInterval = setInterval(function(){
+      attempts++;
+      fetch('/api/orders/' + orderId)
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if(data.previewStatus === 'ready' && data.previewImage){
+            clearInterval(previewPollInterval);
+            lastPreviewImage = data.previewImage;
+            applyLockedPreviewImage();
+          } else if(data.previewStatus === 'failed' || attempts > 60){
+            clearInterval(previewPollInterval);
+          }
+        })
+        .catch(function(){ /* tenta de novo no próximo ciclo */ });
+    }, 2500);
+  }
+
+  // Aplica a prévia real (já borrada + com marca d'água pelo servidor) na
+  // moldura bloqueada. Se o usuário já tiver desbloqueado (pagou) ou
+  // reiniciado o fluxo, não faz nada — evita sobrescrever por engano.
+  function applyLockedPreviewImage(){
+    var frame = document.getElementById('resultFrame');
+    if(!frame || !lastPreviewImage) return;
+    if(frame.classList.contains('unlocked')) return;
+    var resultImgWrap = frame.querySelector('.result-img');
+    if(resultImgWrap){
+      resultImgWrap.innerHTML = '<img src="'+lastPreviewImage+'" alt="Prévia da sua foto (bloqueada até o pagamento)">';
+    }
+    frame.classList.add('has-real-preview');
+    frame.classList.remove('preview-loading');
+  }
+
   function waitForGenerationThenReveal(){
     function check(){
       if(orderReady){
+        var frame = document.getElementById('resultFrame');
+        if(frame && !lastPreviewImage) frame.classList.add('preview-loading');
         goTo(4);
       } else if(orderFailed){
         frictionStageTitle.textContent = 'Ops, algo deu errado';
@@ -1755,7 +1851,6 @@ function fillLoopTrack(track, buildOneCopyHtml){
   });
 
   // ---- restart (step 4) ----
-  var originalResultImgHtml = null;
   document.getElementById('restartBtn').addEventListener('click', function(){
     closeAppOverlay();
     resetHeroDropzone();
@@ -1764,17 +1859,17 @@ function fillLoopTrack(track, buildOneCopyHtml){
     toStep3.disabled = true;
     currentOrderId = null;
     lastFullImage = null;
+    lastPreviewImage = null;
+    if(previewPollInterval) clearInterval(previewPollInterval);
     stopLoading();
     orderReady = false;
     orderFailed = false;
     hideGeneratingState();
-    var resultImgWrap = document.querySelector('#resultFrame .result-img');
-    if(resultImgWrap){
-      if(originalResultImgHtml === null) originalResultImgHtml = resultImgWrap.innerHTML;
-      else resultImgWrap.innerHTML = originalResultImgHtml;
-    }
-    document.getElementById('resultFrame').classList.add('locked');
-    document.getElementById('resultFrame').classList.remove('unlocked');
+    var resultFrame = document.getElementById('resultFrame');
+    var resultImgWrap = resultFrame.querySelector('.result-img');
+    if(resultImgWrap) resultImgWrap.innerHTML = originalResultImgHtml;
+    resultFrame.classList.add('locked');
+    resultFrame.classList.remove('unlocked', 'has-real-preview', 'preview-loading');
     document.getElementById('unlockBtn').style.display = 'inline-flex';
     document.getElementById('downloadBtn').style.display = 'none';
     goTo(1);
@@ -1782,28 +1877,139 @@ function fillLoopTrack(track, buildOneCopyHtml){
     if(heroEl) heroEl.scrollIntoView({behavior:'smooth'});
   });
 
-  // ---- pagamento (Mercado Pago Checkout Pro) ----
+  // ---- pagamento ----
+  // Fluxo principal: checkout embutido (Payment Brick do Mercado Pago —
+  // cartão e Pix, sem sair do site). Se a chave pública ainda não estiver
+  // configurada em produção (MP_PUBLIC_KEY), cai automaticamente no fluxo
+  // antigo (Checkout Pro, com redirect) — ver GET /api/config no backend.
   var overlay = document.getElementById('modalOverlay');
   var payForm = document.getElementById('modalPayForm');
   var processing = document.getElementById('modalProcessing');
+  var processingText = document.getElementById('modalProcessingText');
   var success = document.getElementById('modalSuccess');
+  var brickContainer = document.getElementById('paymentBrickContainer');
+  var pixBox = document.getElementById('pixBox');
+  var payBtnFallback = document.getElementById('payBtn');
 
-  document.getElementById('unlockBtn').addEventListener('click', function(){
-    overlay.classList.add('open');
+  var mpConfigPromise = null;
+  function getMpConfig(){
+    if(!mpConfigPromise){
+      mpConfigPromise = fetch('/api/config').then(function(r){ return r.json(); }).catch(function(){ return {}; });
+    }
+    return mpConfigPromise;
+  }
+
+  var mpInstance = null;
+  var brickController = null;
+
+  function resetPaymentModalUI(){
     payForm.style.display = 'block';
     processing.classList.remove('visible');
     success.classList.remove('visible');
+    pixBox.style.display = 'none';
+    brickContainer.style.display = 'block';
+    payBtnFallback.style.display = 'none';
+    processingText.textContent = 'Confirmando seu pagamento…';
+  }
+
+  function mountFallbackButton(){
+    brickContainer.style.display = 'none';
+    payBtnFallback.style.display = 'inline-flex';
+  }
+
+  function mountPaymentBrick(publicKey, amount){
+    brickContainer.innerHTML = '';
+    if(!window.MercadoPago){ mountFallbackButton(); return; }
+    try{
+      if(!mpInstance) mpInstance = new MercadoPago(publicKey, { locale: 'pt-BR' });
+      var bricksBuilder = mpInstance.bricks();
+      bricksBuilder.create('payment', 'paymentBrickContainer', {
+        initialization: { amount: amount },
+        customization: {
+          paymentMethods: { creditCard: 'all', debitCard: 'all', bankTransfer: 'all', maxInstallments: 1 }
+        },
+        callbacks: {
+          onReady: function(){},
+          onError: function(){ mountFallbackButton(); },
+          onSubmit: function(data){
+            var formData = data.formData;
+            return new Promise(function(resolve, reject){
+              if(!currentOrderId){
+                alert('Pedido não encontrado. Gere sua foto novamente.');
+                reject();
+                return;
+              }
+              fetch('/api/orders/' + currentOrderId + '/payments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+              })
+                .then(function(r){ return r.json().then(function(body){ return { ok: r.ok, body: body }; }); })
+                .then(function(res){
+                  if(!res.ok || res.body.error){
+                    alert('Não foi possível processar o pagamento: ' + (res.body.error || 'tente novamente.'));
+                    reject();
+                    return;
+                  }
+                  handleDirectPaymentResult(res.body);
+                  resolve();
+                })
+                .catch(function(){
+                  alert('Não foi possível processar o pagamento. Verifique sua conexão e tente novamente.');
+                  reject();
+                });
+            });
+          }
+        }
+      }).then(function(controller){ brickController = controller; });
+    } catch(e){
+      mountFallbackButton();
+    }
+  }
+
+  function handleDirectPaymentResult(result){
+    if(result.pix){
+      brickContainer.style.display = 'none';
+      pixBox.style.display = 'block';
+      document.getElementById('pixQrImg').src = 'data:image/png;base64,' + result.pix.qrCodeBase64;
+      document.getElementById('pixCopyInput').value = result.pix.qrCode;
+      pollUntilPaid(currentOrderId);
+      return;
+    }
+    if(result.status === 'rejected'){
+      alert('Pagamento recusado. Tente novamente com outro cartão ou escolha Pix.');
+      return;
+    }
+    // 'approved', 'in_process' ou 'pending' (cartão em análise): mostra
+    // "confirmando" e aguarda a confirmação real vinda do webhook.
+    payForm.style.display = 'none';
+    processing.classList.add('visible');
+    pollUntilPaid(currentOrderId);
+  }
+
+  document.getElementById('unlockBtn').addEventListener('click', function(){
+    overlay.classList.add('open');
+    resetPaymentModalUI();
+    getMpConfig().then(function(cfg){
+      if(cfg && cfg.mpPublicKey){
+        mountPaymentBrick(cfg.mpPublicKey, cfg.priceBRL || 9.9);
+      } else {
+        mountFallbackButton();
+      }
+    });
   });
   document.getElementById('modalClose').addEventListener('click', closeModal);
   overlay.addEventListener('click', function(e){ if(e.target === overlay) closeModal(); });
   function closeModal(){ overlay.classList.remove('open'); }
 
-  document.getElementById('payBtn').addEventListener('click', function(){
+  // ---- fallback: Checkout Pro (redirect) — só usado se o Brick não montar ----
+  payBtnFallback.addEventListener('click', function(){
     if(!currentOrderId){
       alert('Pedido não encontrado. Gere sua foto novamente.');
       return;
     }
     payForm.style.display = 'none';
+    processingText.textContent = 'Redirecionando para o Mercado Pago…';
     processing.classList.add('visible');
     fetch('/api/orders/' + currentOrderId + '/pay', { method: 'POST' })
       .then(function(r){ return r.json(); })
@@ -1819,6 +2025,25 @@ function fillLoopTrack(track, buildOneCopyHtml){
         payForm.style.display = 'block';
         alert('Não foi possível iniciar o pagamento: ' + err.message);
       });
+  });
+
+  // ---- copiar código Pix ----
+  document.getElementById('pixCopyBtn').addEventListener('click', function(){
+    var input = document.getElementById('pixCopyInput');
+    var btn = document.getElementById('pixCopyBtn');
+    var restore = function(){ btn.textContent = 'Copiar'; };
+    var done = function(){ btn.textContent = 'Copiado!'; setTimeout(restore, 2000); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(input.value).then(done).catch(function(){
+        input.select();
+        document.execCommand('copy');
+        done();
+      });
+    } else {
+      input.select();
+      document.execCommand('copy');
+      done();
+    }
   });
 
   document.getElementById('modalDoneBtn').addEventListener('click', function(){
