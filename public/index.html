@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#0a0a0a">
+<title>PhotoPRO™ — Foto profissional a partir de uma selfie</title>
+<style>
+:root{
+  --bg:#0a0a0b;
+  --bg-alt:#101012;
+  --card:#161618;
+  --card-2:#1c1c1f;
+  --border:#28282c;
+  --green:#2fe38b;
+  --green-2:#17c96b;
+  --green-soft:rgba(47,227,139,.12);
+  --text:#f5f5f6;
+  --muted:#9a9aa2;
+  --muted-2:#6f6f77;
+  --danger:#ff5c5c;
+  --radius:16px;
+  --maxw:1120px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+img,svg{display:block;max-width:100%;}
+a{color:inherit;}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px;}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:none;border-radius:999px;cursor:pointer;
+  font-weight:700;font-size:15px;padding:14px 26px;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+  font-family:inherit;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--green) 0%,var(--green-2) 100%);
+  color:#04140c;
+  box-shadow:0 8px 24px -6px rgba(47,227,139,.45);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px -6px rgba(47,227,139,.6);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-ghost{
+  background:transparent;color:var(--text);border:1px solid var(--border);
+}
+.btn-ghost:hover{border-color:#3a3a40;background:var(--card);}
+.btn-block{width:100%;}
+.tag{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--green-soft);color:var(--green);
+  border:1px solid rgba(47,227,139,.3);
+  font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  padding:6px 12px;border-radius:999px;
+}
+.icon{width:20px;height:20px;flex-shrink:0;}
+.live-tag{gap:8px;border-color:transparent;}
+.live-dot-sm{width:7px;height:7px;border-radius:50%;background:var(--green);position:relative;flex-shrink:0;}
+.live-dot-sm::after{
+  content:"";position:absolute;inset:-4px;border-radius:50%;
+  border:1px solid var(--green);opacity:.6;
+  animation:pulse 1.8s ease-out infinite;
+}
+
+/* ---------- Top ticker ---------- */
+.ticker{
+  background:var(--bg-alt);border-bottom:1px solid var(--border);
+  padding:9px 0;font-size:13px;color:var(--muted);
+}
+.ticker .wrap{display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;flex-wrap:wrap;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);position:relative;flex-shrink:0;}
+.dot::after{
+  content:"";position:absolute;inset:-4px;border-radius:50%;
+  border:1px solid var(--green);opacity:.6;
+  animation:pulse 1.8s ease-out infinite;
+}
+@keyframes pulse{0%{transform:scale(.6);opacity:.8;}100%{transform:scale(2.2);opacity:0;}}
+.ticker strong{color:var(--text);}
+
+/* ---------- Header ---------- */
+header{
+  position:sticky;top:0;z-index:40;
+  background:rgba(10,10,11,.85);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;letter-spacing:-.01em;}
+.logo sup{font-size:10px;color:var(--muted);top:-8px;}
+.nav-links{display:flex;gap:28px;font-size:14px;color:var(--muted);}
+.nav-links a:hover{color:var(--text);}
+@media (max-width:720px){.nav-links{display:none;}}
+
+/* ---------- Hero ---------- */
+.hero{padding:64px 0 40px;position:relative;overflow:hidden;}
+.hero::before{
+  content:"";position:absolute;top:-200px;left:50%;transform:translateX(-50%);
+  width:900px;height:500px;
+  background:radial-gradient(circle,rgba(47,227,139,.18) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center;position:relative;}
+@media (max-width:900px){.hero-grid{grid-template-columns:1fr;gap:36px;}}
+.eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:18px;}
+.h1{
+  font-size:52px;line-height:1.04;font-weight:800;letter-spacing:-.03em;margin:0 0 20px;
+}
+@media (max-width:640px){.h1{font-size:34px;}}
+.h1 .grad{
+  background:linear-gradient(135deg,var(--green) 0%,#b6ffdb 60%,var(--green) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.sub{font-size:17px;color:var(--muted);max-width:480px;margin-bottom:30px;}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.hero-note{font-size:13px;color:var(--muted-2);display:flex;align-items:center;gap:8px;}
+.hero-note svg{color:var(--green);}
+
+/* ---------- Hero centered (ClarityCheck-inspired) ---------- */
+.hero-center{text-align:center;position:relative;}
+.hero-center .eyebrow{justify-content:center;}
+.hero-center .h1{margin-left:auto;margin-right:auto;}
+.hero-center .sub{margin-left:auto;margin-right:auto;}
+
+.hero-card-wrap{position:relative;max-width:440px;margin:0 auto 20px;}
+.hero-card{
+  background:var(--card);border:1px solid var(--border);border-radius:22px;
+  padding:26px;box-shadow:0 30px 70px -24px rgba(0,0,0,.7);
+  text-align:left;position:relative;z-index:2;
+}
+.hero-field{margin-bottom:14px;}
+.hero-field:last-of-type{margin-bottom:20px;}
+.hero-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.hero-select-wrap{position:relative;}
+.hero-select{
+  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;
+  padding:13px 40px 13px 14px;color:var(--text);font-size:14px;font-family:inherit;
+  appearance:none;-webkit-appearance:none;cursor:pointer;
+}
+.hero-select-wrap svg{position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);}
+.hero-upload-btn{
+  width:100%;background:var(--bg);border:1px dashed var(--border);border-radius:12px;
+  padding:13px 14px;color:var(--muted);font-size:14px;font-family:inherit;
+  display:flex;align-items:center;gap:10px;cursor:pointer;text-align:left;
+}
+.hero-upload-btn svg{color:var(--green);flex-shrink:0;}
+.hero-upload-btn.filled{border-style:solid;border-color:var(--green);color:var(--text);}
+
+.float-icon{
+  position:absolute;width:48px;height:48px;border-radius:14px;
+  background:var(--card-2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:var(--green);
+  box-shadow:0 14px 28px -10px rgba(0,0,0,.6);z-index:1;
+  animation:floaty 4.4s ease-in-out infinite;
+}
+@keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.float-icon.i1{top:-20px;left:-20px;animation-delay:0s;}
+.float-icon.i2{top:-26px;right:-16px;animation-delay:.7s;}
+.float-icon.i3{bottom:-16px;left:-28px;animation-delay:1.3s;}
+.float-icon.i4{bottom:-22px;right:-24px;animation-delay:2s;}
+@media (max-width:600px){.float-icon{width:38px;height:38px;}
+  .float-icon.i1{left:-8px;top:-14px;}
+  .float-icon.i2{right:-8px;top:-18px;}
+  .float-icon.i3{left:-10px;bottom:-10px;}
+  .float-icon.i4{right:-10px;bottom:-14px;}
+}
+.hero-phone-preview{max-width:190px;margin:8px auto 0;}
+.hero-phone-preview .phone{width:100%;}
+.hero-phone-label{font-size:12px;color:var(--muted-2);margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:6px;}
+
+/* ---------- Example carousel ---------- */
+.example-carousel-wrap{margin-top:44px;padding-top:8px;}
+.example-track-viewport{
+  overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+}
+.example-track{
+  display:flex;width:max-content;
+  animation:scrollExamples 24s linear infinite;
+}
+.example-track:hover{animation-play-state:paused;}
+@keyframes scrollExamples{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+.example-card{
+  width:150px;flex-shrink:0;border-radius:20px;overflow:hidden;
+  border:1px solid var(--border);background:#000;margin-right:18px;
+  box-shadow:0 20px 40px -18px rgba(0,0,0,.7);
+}
+.example-card .example-img{aspect-ratio:9/16;position:relative;background:#000;}
+.example-card .example-img svg{width:100%;height:100%;display:block;}
+.example-card .example-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.example-layer{position:absolute;inset:0;}
+.example-layer.is-after{opacity:0;animation:exampleCrossfade 7s ease-in-out infinite;}
+@keyframes exampleCrossfade{0%,38%{opacity:0;}50%,88%{opacity:1;}100%{opacity:0;}}
+.example-caption{
+  padding:10px 12px;background:var(--card-2);
+  display:flex;justify-content:space-between;align-items:center;gap:6px;
+}
+.example-caption span.name{font-size:11px;font-weight:700;color:var(--text);}
+.example-badge-wrap{position:relative;width:46px;height:16px;flex-shrink:0;}
+.example-badge-wrap .badge{
+  position:absolute;top:0;left:0;right:0;text-align:center;
+  background:var(--green);color:#04140c;padding:2px 0;border-radius:999px;font-size:9px;font-weight:800;
+}
+.example-badge-wrap .badge.badge-before{background:var(--card);color:var(--muted);border:1px solid var(--border);opacity:1;}
+.example-badge-wrap .badge.badge-after{opacity:0;animation:exampleCrossfade 7s ease-in-out infinite;}
+
+/* phone mockup */
+.phone{
+  width:280px;max-width:100%;margin:0 auto;
+  background:#000;border:8px solid #1c1c1f;border-radius:38px;
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.8), 0 0 0 1px #262629;
+  overflow:hidden;position:relative;
+}
+.phone::before{
+  content:"";position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  width:80px;height:18px;background:#000;border-radius:12px;z-index:5;
+}
+.phone-screen{aspect-ratio:9/18.5;position:relative;background:linear-gradient(180deg,#141416,#0a0a0b);}
+.phone-photo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .5s ease;}
+.phone-photo svg{width:100%;height:100%;}
+.phone-caption{
+  position:absolute;bottom:0;left:0;right:0;padding:16px 18px 20px;
+  background:linear-gradient(0deg,rgba(0,0,0,.85),transparent);
+  font-size:12px;font-weight:700;color:#fff;display:flex;justify-content:space-between;align-items:center;
+}
+.phone-caption .badge{background:var(--green);color:#04140c;padding:3px 9px;border-radius:999px;font-size:10px;}
+.phone-toggle{
+  position:absolute;top:16px;right:14px;z-index:6;
+  background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);
+  border-radius:999px;padding:5px;display:flex;gap:2px;
+}
+.phone-toggle button{
+  border:none;background:transparent;color:var(--muted);font-size:11px;font-weight:700;
+  padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;
+}
+.phone-toggle button.active{background:var(--green);color:#04140c;}
+
+/* ---------- Marquee ---------- */
+.marquee-section{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg-alt);padding:22px 0;overflow:hidden;}
+.marquee-label{text-align:center;font-size:12px;color:var(--muted-2);margin-bottom:16px;padding:0 20px;}
+.marquee-track{display:flex;width:max-content;animation:scroll 30s linear infinite;}
+.marquee-track:hover{animation-play-state:paused;}
+@keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+.marquee-item{
+  display:flex;align-items:center;gap:10px;padding:0 30px;
+  color:#fff;font-size:16px;font-weight:700;white-space:nowrap;border-right:1px solid var(--border);
+  letter-spacing:-.01em;opacity:.9;
+}
+.marquee-item svg{color:#fff;width:22px;height:22px;flex-shrink:0;}
+
+/* ---------- Section generic ---------- */
+section{padding:80px 0;}
+.section-head{text-align:center;max-width:640px;margin:0 auto 48px;}
+.section-head .tag{margin-bottom:16px;}
+.h2{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0 0 12px;}
+@media (max-width:640px){.h2{font-size:26px;}}
+.section-head p{color:var(--muted);font-size:16px;margin:0;}
+
+/* features carousel */
+.features-viewport{
+  overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
+}
+.features-track{
+  display:flex;width:max-content;
+  animation:scrollFeatures 32s linear infinite;
+}
+.features-track:hover{animation-play-state:paused;}
+@keyframes scrollFeatures{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+.feature{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:26px;width:260px;flex-shrink:0;margin-right:20px;
+}
+.feature .icon-wrap{
+  width:44px;height:44px;border-radius:12px;background:var(--green-soft);
+  display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:var(--green);
+}
+.feature h3{font-size:16px;margin:0 0 8px;}
+.feature p{font-size:14px;color:var(--muted);margin:0;}
+
+/* ---------- Advantages ---------- */
+.advantages-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+@media (max-width:860px){.advantages-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:560px){.advantages-grid{grid-template-columns:1fr;}}
+.advantage-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:26px;text-align:center;
+}
+.advantage-card .icon-wrap{
+  width:44px;height:44px;border-radius:12px;background:var(--green-soft);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--green);
+}
+.advantage-card h3{font-size:15px;margin:0 0 8px;}
+.advantage-card p{font-size:13px;color:var(--muted);margin:0;}
+
+/* ---------- Reviews ---------- */
+.reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;transition:opacity .2s ease;}
+.reviews-grid.fade{opacity:0;}
+@media (max-width:860px){.reviews-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:560px){.reviews-grid{grid-template-columns:1fr;}}
+.reviews-pagination{display:flex;justify-content:center;gap:10px;margin-top:28px;}
+.page-btn{
+  width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--card-2);
+  color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;transition:all .2s ease;
+}
+.page-btn:hover{border-color:var(--green);color:var(--green);}
+.page-btn.active{background:var(--green);color:#04140c;border-color:var(--green);}
+.review-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;display:flex;flex-direction:column;gap:14px;
+}
+.review-stars{display:flex;gap:2px;color:var(--green);}
+.review-text{font-size:14px;color:var(--text);margin:0;line-height:1.5;}
+.review-author{display:flex;align-items:center;gap:10px;margin-top:auto;}
+.review-avatar{
+  width:34px;height:34px;border-radius:50%;background:var(--green-soft);color:var(--green);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;
+}
+.review-author strong{display:block;font-size:13px;}
+.review-author span{font-size:12px;color:var(--muted-2);}
+
+/* ---------- App / demo ---------- */
+.app-shell{
+  background:var(--card);border:1px solid var(--border);border-radius:24px;
+  padding:36px;position:relative;
+}
+@media (max-width:640px){.app-shell{padding:20px;border-radius:18px;}}
+.steps-row{display:flex;justify-content:center;gap:6px;margin-bottom:32px;flex-wrap:wrap;}
+.step-pill{
+  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted-2);
+  padding:6px 12px;border-radius:999px;border:1px solid var(--border);
+}
+.step-pill.active{color:var(--green);border-color:rgba(47,227,139,.4);background:var(--green-soft);}
+.step-pill.done{color:var(--text);}
+.step-num{width:16px;height:16px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;}
+.step-pill.active .step-num, .step-pill.done .step-num{background:var(--green);color:#04140c;}
+
+.app-panel{display:none;}
+.app-panel.visible{display:block;animation:fadein .35s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* upload */
+.dropzone{
+  border:2px dashed var(--border);border-radius:18px;padding:48px 24px;text-align:center;
+  cursor:pointer;transition:border-color .15s ease, background .15s ease;
+}
+.dropzone.drag{border-color:var(--green);background:var(--green-soft);}
+.hero-dropzone{padding:30px 18px;}
+.hero-dropzone h3{font-size:15px;}
+.hero-dropzone p{font-size:12px;}
+.dropzone svg{color:var(--green);margin:0 auto 16px;}
+.dropzone h3{margin:0 0 6px;font-size:17px;}
+.dropzone p{margin:0 0 18px;color:var(--muted);font-size:14px;}
+.dropzone input{display:none;}
+.upload-preview{display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap;}
+.upload-thumb{width:90px;height:90px;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#000;}
+.upload-thumb svg{width:100%;height:100%;}
+
+/* style select */
+.style-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+@media (max-width:760px){.style-grid{grid-template-columns:repeat(2,1fr);}}
+.style-card{
+  border:1px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;
+  background:var(--card-2);text-align:center;transition:border-color .15s ease, transform .15s ease;
+}
+.style-card:hover{transform:translateY(-2px);}
+.style-card.selected{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset;}
+.style-swatch{
+  width:100%;aspect-ratio:1;border-radius:10px;margin-bottom:10px;overflow:hidden;background:#000;
+}
+.style-swatch svg{width:100%;height:100%;}
+.style-card h4{font-size:13px;margin:0 0 2px;}
+.style-card span{font-size:11px;color:var(--muted-2);}
+.panel-actions{display:flex;justify-content:center;gap:12px;margin-top:28px;}
+
+/* loading */
+.loading-wrap{text-align:center;padding:20px 0 4px;}
+.loading-ring{width:96px;height:96px;margin:0 auto 26px;position:relative;}
+.loading-ring svg{width:100%;height:100%;animation:spin 1.6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-steps{max-width:340px;margin:0 auto 26px;text-align:left;}
+.loading-step{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:14px;color:var(--muted-2);}
+.loading-step .chk{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.loading-step.active{color:var(--text);}
+.loading-step.active .chk{border-color:var(--green);}
+.loading-step.done{color:var(--muted);}
+.loading-step.done .chk{background:var(--green);border-color:var(--green);}
+.loading-step.done .chk svg{width:11px;height:11px;color:#04140c;}
+.progress-bar{height:6px;border-radius:999px;background:var(--border);overflow:hidden;max-width:340px;margin:0 auto;}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--green),var(--green-2));transition:width .3s ease;}
+
+/* ---------- Full-page overlay ---------- */
+.app-overlay{
+  position:fixed;inset:0;z-index:90;background:rgba(6,7,8,.985);
+  display:none;overflow-y:auto;padding:70px 20px 40px;
+}
+body.overlay-active .example-track,
+body.overlay-active .features-track,
+body.overlay-active .marquee-track{animation-play-state:paused;}
+.app-overlay.open{display:block;}
+.app-overlay-inner{max-width:720px;margin:0 auto;position:relative;}
+.app-overlay-close{
+  position:absolute;top:-46px;right:0;background:var(--card);border:1px solid var(--border);
+  width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:var(--muted);cursor:pointer;z-index:5;
+}
+.app-overlay-close:hover{color:var(--text);border-color:#3a3a40;}
+.app-overlay-eyebrow{text-align:center;margin-bottom:18px;}
+
+/* ---------- Quality check ---------- */
+.quality-thumb-row{display:flex;align-items:center;gap:16px;margin-bottom:26px;}
+.quality-thumb{width:60px;height:60px;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#000;flex-shrink:0;}
+.quality-thumb svg{width:100%;height:100%;}
+.quality-filename{font-weight:700;font-size:14px;}
+.quality-sub{font-size:12px;color:var(--muted-2);}
+.quality-tips{display:flex;flex-direction:column;gap:10px;}
+.quality-tip{
+  display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;
+  background:var(--card-2);border:1px solid var(--border);
+}
+.quality-tip .tip-icon{
+  width:38px;height:38px;border-radius:10px;background:var(--bg);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;
+}
+.quality-tip .tip-text{flex:1;}
+.quality-tip .tip-text strong{display:block;font-size:13px;margin-bottom:2px;}
+.quality-tip .tip-text span{font-size:12px;color:var(--muted-2);}
+.quality-tip .tip-mark{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.quality-tip.avoid .tip-mark{background:rgba(255,92,92,.12);color:var(--danger);}
+.quality-tip.ok .tip-mark{background:var(--green-soft);color:var(--green);}
+.quality-tip.ok .tip-icon{color:var(--green);border-color:rgba(47,227,139,.3);}
+
+/* ---------- Friction loading ---------- */
+.friction-wrap{max-width:420px;margin:0 auto;text-align:center;position:relative;}
+.friction-trust-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+.friction-trust-badge{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--green);background:var(--green-soft);border:1px solid rgba(47,227,139,.25);padding:6px 12px;border-radius:99px;}
+.friction-trust-badge svg{flex-shrink:0;}
+.friction-preview{position:relative;width:132px;height:132px;margin:0 auto 34px;}
+.friction-preview-img{width:100%;height:100%;border-radius:50%;overflow:hidden;border:2px solid var(--border);background:#000;}
+.friction-preview-img svg{width:100%;height:100%;}
+.friction-preview-img img{width:100%;height:100%;object-fit:cover;}
+.friction-preview-ring{position:absolute;inset:-9px;width:150px;height:150px;}
+.friction-preview-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+.friction-preview-ring .ring-bg{fill:none;stroke:var(--border);stroke-width:3;}
+.friction-preview-ring .ring-fg{fill:none;stroke:var(--green);stroke-width:3;stroke-linecap:round;}
+.friction-pct{
+  position:absolute;bottom:-32px;left:0;right:0;text-align:center;
+  font-size:14px;font-weight:800;color:var(--green);
+}
+.friction-stage-title{font-size:18px;font-weight:800;margin-bottom:6px;min-height:24px;transition:opacity .25s ease, transform .25s ease;}
+.friction-stage-sub{font-size:13px;color:var(--muted);margin-bottom:26px;min-height:18px;transition:opacity .25s ease, transform .25s ease;}
+.friction-stage-title.fade-out, .friction-stage-sub.fade-out{opacity:0;transform:translateY(5px);}
+.friction-checklist{display:flex;flex-direction:column;gap:2px;text-align:left;margin-bottom:22px;transition:opacity .25s ease, transform .25s ease;}
+.friction-checklist.fade-out{opacity:0;transform:translateY(5px);}
+.friction-check{display:flex;align-items:center;gap:12px;padding:8px 0;font-size:13px;color:var(--muted-2);transition:color .3s ease;}
+.friction-check .chk{
+  width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;color:var(--muted-2);transition:all .3s ease;
+}
+.friction-check.active{color:var(--text);font-weight:600;}
+.friction-check.active .chk{border-color:var(--green);color:var(--green);}
+.friction-check.active .chk svg{animation:chkSpin .85s linear infinite;transform-origin:center;}
+.friction-check.done{color:var(--muted);}
+.friction-check.done .chk{background:var(--green);border-color:var(--green);color:#04140c;animation:checkPop .3s ease;}
+.friction-check.done .chk svg{animation:none;}
+@keyframes checkPop{0%{transform:scale(.6);}60%{transform:scale(1.12);}100%{transform:scale(1);}}
+@keyframes chkSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.friction-fact{
+  display:flex;align-items:flex-start;gap:10px;background:var(--card-2);border:1px solid var(--border);
+  border-radius:12px;padding:13px 15px;font-size:12.5px;color:var(--muted);text-align:left;margin-bottom:14px;
+}
+.friction-fact svg{color:var(--green);flex-shrink:0;margin-top:1px;}
+.friction-social{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--muted-2);}
+.friction-warning{display:none;align-items:flex-start;gap:10px;background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.3);border-radius:12px;padding:12px 14px;font-size:12px;color:#ffb020;text-align:left;margin-top:16px;}
+.friction-warning.show{display:flex;animation:fadein .4s ease;}
+.friction-warning svg{flex-shrink:0;margin-top:1px;}
+.friction-warning strong{color:#ffcf6b;}
+.friction-engage{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(6,8,10,.9);border-radius:20px;z-index:5;padding:20px;}
+.friction-engage.show{display:flex;animation:fadein .3s ease;}
+.friction-engage-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px 22px;max-width:320px;width:100%;text-align:center;position:relative;}
+.friction-engage-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted-2);font-size:20px;cursor:pointer;line-height:1;padding:4px;}
+.friction-engage-card h4{font-size:15px;margin-bottom:6px;}
+.friction-engage-card p{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.friction-engage-options{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:14px;}
+.friction-engage-options .chip{background:var(--card-2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:8px 14px;border-radius:99px;cursor:pointer;transition:all .2s ease;}
+.friction-engage-options .chip:hover{border-color:var(--green);color:var(--green);}
+.friction-engage-skip{background:none;border:none;color:var(--muted-2);font-size:12px;cursor:pointer;text-decoration:underline;}
+
+/* result */
+.result-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:36px;align-items:center;}
+@media (max-width:860px){.result-grid{grid-template-columns:1fr;}}
+.result-frame{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#000;max-width:320px;margin:0 auto;}
+.result-frame img, .result-frame svg{width:100%;display:block;}
+.result-frame.locked .result-img{filter:blur(14px) saturate(0.8);}
+.generating-state{max-width:320px;margin:10px auto 0;text-align:center;padding:34px 20px;}
+.watermark{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.watermark span{
+  font-size:15px;font-weight:800;letter-spacing:.35em;color:rgba(255,255,255,.85);
+  transform:rotate(-28deg);
+  text-shadow:0 2px 10px rgba(0,0,0,.6);
+  border:2px solid rgba(255,255,255,.6);padding:6px 18px;
+}
+.result-frame.unlocked .watermark{display:none;}
+.result-frame.unlocked .result-img{filter:none;}
+.lock-chip{
+  position:absolute;top:12px;left:12px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);
+  padding:5px 11px;border-radius:999px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;
+}
+.result-frame.unlocked .lock-chip{background:var(--green);color:#04140c;border-color:var(--green);}
+
+.price-card{background:var(--card-2);border:1px solid var(--border);border-radius:18px;padding:28px;}
+.price-old{color:var(--muted-2);text-decoration:line-through;font-size:16px;}
+.price-row{display:flex;align-items:baseline;gap:10px;margin:6px 0 4px;}
+.price-new{font-size:44px;font-weight:800;letter-spacing:-.02em;}
+.price-tag{background:var(--green);color:#04140c;font-size:11px;font-weight:800;padding:4px 10px;border-radius:8px;letter-spacing:.03em;}
+.price-list{list-style:none;padding:0;margin:20px 0;display:flex;flex-direction:column;gap:10px;}
+.price-list li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);}
+.price-list svg{color:var(--green);flex-shrink:0;}
+
+/* modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.82);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:20px;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  max-width:400px;width:100%;padding:28px;position:relative;
+}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);cursor:pointer;}
+.modal h3{margin:0 0 4px;font-size:19px;}
+.modal p.desc{color:var(--muted);font-size:13px;margin:0 0 20px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;}
+.field input{
+  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;color:var(--text);font-size:14px;font-family:inherit;
+}
+.field input:focus{outline:none;border-color:var(--green);}
+.field-row{display:flex;gap:10px;}
+.pay-total{display:flex;justify-content:space-between;align-items:center;margin:18px 0;padding-top:14px;border-top:1px dashed var(--border);font-size:14px;}
+.pay-total strong{font-size:20px;}
+.modal-lock-note{display:flex;align-items:center;gap:6px;justify-content:center;font-size:11px;color:var(--muted-2);margin-top:14px;}
+.modal-legal-note{font-size:10.5px;color:var(--muted-2);text-align:center;margin:8px 0 0;line-height:1.5;}
+.modal-legal-note a{color:var(--muted);text-decoration:underline;}
+.modal-legal-note a:hover{color:var(--green);}
+.modal-processing{text-align:center;padding:20px 0;display:none;}
+.modal-processing.visible{display:block;}
+.modal-success{text-align:center;padding:10px 0;display:none;}
+.modal-success.visible{display:block;}
+.modal-success .check-circle{width:64px;height:64px;border-radius:50%;background:var(--green-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--green);}
+
+/* faq */
+.faq-split{display:grid;grid-template-columns:.75fr 1.25fr;gap:56px;align-items:start;}
+@media (max-width:820px){.faq-split{grid-template-columns:1fr;gap:24px;}}
+.faq-heading{font-size:38px;font-weight:800;letter-spacing:-.02em;line-height:1.1;position:sticky;top:100px;}
+@media (max-width:820px){.faq-heading{position:static;font-size:28px;}}
+.faq{max-width:720px;margin:0 auto;}
+.faq-item{border-bottom:1px solid var(--border);}
+.faq-q{
+  width:100%;text-align:left;background:none;border:none;color:var(--text);
+  padding:20px 4px;font-size:16px;font-weight:700;cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;gap:16px;font-family:inherit;
+}
+.faq-q svg{flex-shrink:0;transition:transform .2s ease;color:var(--muted);}
+.faq-item.open .faq-q svg{transform:rotate(45deg);color:var(--green);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+.faq-item.open .faq-a{max-height:300px;}
+.faq-a p{margin:0 0 20px;color:var(--muted);font-size:14px;padding:0 4px;}
+
+/* footer */
+footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--bg-alt);}
+.footer-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:32px;margin-bottom:32px;}
+.footer-cols{display:flex;gap:56px;flex-wrap:wrap;}
+.footer-col h5{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-2);margin:0 0 14px;}
+.footer-col a{display:block;color:var(--muted);text-decoration:none;font-size:14px;margin-bottom:10px;}
+.footer-col a:hover{color:var(--text);}
+.footer-bottom{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;
+  padding-top:24px;border-top:1px solid var(--border);
+}
+.pay-icons{display:flex;gap:10px;align-items:center;}
+.pay-icons .pill{
+  border:1px solid var(--border);border-radius:6px;padding:5px 9px;font-size:10px;font-weight:800;
+  color:var(--muted);letter-spacing:.03em;
+}
+.disclaimer{font-size:11px;color:var(--muted-2);max-width:900px;margin:20px auto 0;text-align:center;line-height:1.6;}
+.copyright{font-size:12px;color:var(--muted-2);}
+.footer-styles-row{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding-bottom:24px;margin-bottom:24px;border-bottom:1px solid var(--border);
+  font-size:13px;color:var(--muted-2);
+}
+.footer-styles-row a{color:var(--muted);text-decoration:none;}
+.footer-styles-row a:hover{color:var(--green);}
+.footer-styles-row .sep{color:var(--border);}
+.trust-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:28px;
+  padding-bottom:28px;margin-bottom:28px;border-bottom:1px solid var(--border);
+}
+@media (max-width:760px){.trust-grid{grid-template-columns:1fr;gap:22px;}}
+.trust-block h5{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-2);margin:0 0 14px;}
+.trust-badge{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:10px;}
+.trust-badge svg{color:var(--green);flex-shrink:0;width:18px;height:18px;}
+.trust-logos{display:flex;flex-wrap:wrap;gap:10px;}
+.trust-logo{
+  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);
+  background:var(--card);border:1px solid var(--border);padding:7px 12px;border-radius:8px;
+}
+.trust-logo svg{width:14px;height:14px;color:var(--muted);flex-shrink:0;}
+.gen-error{color:var(--danger);font-size:13px;margin-top:10px;text-align:center;display:none;}
+.gen-error.show{display:block;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav wrap" style="justify-content:center;">
+    <div class="logo">
+      <svg class="icon" width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="5" width="20" height="15" rx="3" stroke="#2fe38b" stroke-width="1.7"/>
+        <circle cx="12" cy="12.5" r="4" stroke="#2fe38b" stroke-width="1.7"/>
+        <path d="M8 5L9.2 3H14.8L16 5" stroke="#2fe38b" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+      PhotoPRO<sup>™</sup>
+    </div>
+  </div>
+</header>
+
+<section class="hero" id="hero">
+  <div class="wrap hero-center">
+    <div class="eyebrow">
+      <span class="tag live-tag">
+        <span class="live-dot-sm"></span>
+        <strong id="heroCounterNum">4.812</strong>&nbsp;fotos profissionais geradas hoje
+      </span>
+    </div>
+    <h1 class="h1">Sua selfie vira uma<br><span class="grad">foto profissional</span> em minutos</h1>
+    <p class="sub">Esqueça os custos de um fotógrafo. Envie uma foto comum e receba uma imagem de estúdio pronta para alavancar sua carreira.</p>
+
+    <div class="hero-card-wrap">
+      <div class="float-icon i1" title="Roupa social">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 20V17C4 14.8 7.6 13 12 13C16.4 13 20 14.8 20 17V20" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/></svg>
+      </div>
+      <div class="float-icon i2" title="Preservação de identidade">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="currentColor" stroke-width="1.8"/></svg>
+      </div>
+      <div class="float-icon i3" title="Fundo de estúdio">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 15L8 11L12 14L21 7" stroke="currentColor" stroke-width="1.8"/></svg>
+      </div>
+      <div class="float-icon i4" title="Download em HD">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 4V15M12 15L8 11M12 15L16 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+
+      <div class="hero-card">
+        <div class="dropzone hero-dropzone" id="heroDropzone">
+          <input type="file" id="heroFileInput" accept="image/*">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 16V4M12 4L7 9M12 4L17 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <h3>Arraste sua selfie aqui</h3>
+          <p>ou clique para escolher um arquivo — JPG ou PNG</p>
+          <button type="button" class="btn btn-ghost" id="heroPickFileBtn">Escolher arquivo</button>
+        </div>
+        <button type="button" class="btn btn-primary btn-block" id="heroGenerateBtn" style="margin-top:18px;">Gerar minha foto grátis</button>
+      </div>
+    </div>
+
+    <div class="hero-note" style="justify-content:center;">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7V12L15 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      Leva menos de 2 minutos. Simples, rápido e seguro.
+    </div>
+
+    <div class="example-carousel-wrap">
+      <div class="hero-phone-label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Exemplos de resultado por estilo
+      </div>
+      <div class="example-track-viewport">
+        <div class="example-track" id="exampleTrack"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="marquee-section">
+  <div class="marquee-track" id="marqueeTrack"></div>
+</div>
+
+<section id="como-funciona">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="tag">O que você recebe</span>
+      <h2 class="h2">Um retrato profissional, do seu jeito</h2>
+      <p>Roupa social, fundo de estúdio e iluminação ajustada automaticamente — mantendo o seu rosto real, do jeito que você é.</p>
+    </div>
+    <div class="features-viewport">
+      <div class="features-track" id="featuresTrack"></div>
+    </div>
+  </div>
+</section>
+
+<section id="vantagens">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="tag">Por que usar o PhotoPRO</span>
+      <h2 class="h2">Feito para quem precisa de uma boa foto, rápido</h2>
+      <p>Sem estúdio, sem agenda, sem complicação.</p>
+    </div>
+    <div class="advantages-grid">
+      <div class="advantage-card">
+        <div class="icon-wrap"><svg class="icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7V12L15 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <h3>Pronto em minutos</h3>
+        <p>Sem agendar fotógrafo nem sair de casa.</p>
+      </div>
+      <div class="advantage-card">
+        <div class="icon-wrap"><svg class="icon" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="currentColor" stroke-width="1.8"/></svg></div>
+        <h3>Seus dados protegidos</h3>
+        <p>Sua selfie é usada só para gerar o seu resultado.</p>
+      </div>
+      <div class="advantage-card">
+        <div class="icon-wrap"><svg class="icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 15L8 11L12 14L21 7" stroke="currentColor" stroke-width="1.8"/></svg></div>
+        <h3>Qualidade de estúdio</h3>
+        <p>Roupa social, fundo e luz ajustados automaticamente.</p>
+      </div>
+      <div class="advantage-card">
+        <div class="icon-wrap"><svg class="icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20C4 16 7.6 14 12 14C16.4 14 20 16 20 20" stroke="currentColor" stroke-width="1.8"/></svg></div>
+        <h3>Continua sendo você</h3>
+        <p>O resultado preserva os seus traços reais.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="depoimentos">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="tag">Quem já usou</span>
+      <h2 class="h2">Resultados reais, aprovados por quem já usou</h2>
+      <p>Avaliações ilustrativas de uso do protótipo.</p>
+    </div>
+    <div class="reviews-grid" id="reviewsGrid"></div>
+    <div class="reviews-pagination" id="reviewsPagination">
+      <button class="page-btn active" data-page="1">1</button>
+      <button class="page-btn" data-page="2">2</button>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="faq-split">
+      <div>
+        <span class="tag" style="margin-bottom:16px;">Dúvidas</span>
+        <h2 class="faq-heading">Perguntas<br>Frequentes</h2>
+      </div>
+      <div class="faq" id="faqList">
+      <div class="faq-item open">
+        <button class="faq-q">É seguro enviar minha selfie?
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a"><p>Sim. A conexão é criptografada de ponta a ponta e sua foto é usada exclusivamente para gerar o seu resultado — nunca é compartilhada com terceiros.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Preciso criar uma conta?
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a"><p>Não. Você não precisa criar conta nem cadastro para usar o PhotoPRO.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">O resultado se parece mesmo comigo?
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a"><p>Sim. O processamento ajusta roupa, fundo e iluminação mantendo os seus traços reais — o resultado continua sendo você, só que pronto para currículo e LinkedIn.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Minha selfie fica armazenada?
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a"><p>A foto enviada é processada apenas para gerar o seu resultado. Em conformidade com a LGPD, você pode solicitar a exclusão dos seus dados a qualquer momento. Assim que o pedido é entregue, a selfie original é descartada do servidor.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Quanto tempo leva para gerar a foto?
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a"><p>Poucos minutos. O processamento passa por análise da foto, aplicação da roupa, ajuste de iluminação, troca de fundo e renderização final em alta resolução.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Minhas fotos são usadas para treinar alguma tecnologia?
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a"><p>Não. Sua foto é usada apenas para gerar o seu próprio resultado e não é reaproveitada para treinar nenhum modelo.</p></div>
+      </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="trust-grid">
+      <div class="trust-block">
+        <h5>Segurança e Proteção</h5>
+        <div class="trust-badge">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="currentColor" stroke-width="1.8"/></svg>
+          Ambiente 100% criptografado (SSL)
+        </div>
+        <div class="trust-badge">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3L20 6V11C20 16 16.5 19.5 12 21C7.5 19.5 4 16 4 11V6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Site verificado — Google Safe Browsing
+        </div>
+      </div>
+      <div class="trust-block">
+        <h5>Tecnologia utilizada</h5>
+        <div class="trust-logos">
+          <span class="trust-logo"><svg viewBox="0 0 24 24" fill="none"><path d="M3 16C8 19 16 19 21 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 15L21 16L20 19" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> AWS</span>
+          <span class="trust-logo"><svg viewBox="0 0 24 24" fill="none"><path d="M8 17C5.8 17 4 15.2 4 13C4 11 5.4 9.4 7.3 9.1C7.9 6.7 10 5 12.5 5C15.3 5 17.6 7.1 17.9 9.8C19.7 10.1 21 11.6 21 13.5C21 15.4 19.4 17 17.5 17H8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> Google Cloud</span>
+          <span class="trust-logo"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4L21 20H3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg> Vercel</span>
+          <span class="trust-logo"><svg viewBox="0 0 24 24" fill="none"><path d="M4 17C4 14 6.5 12 9 12.5C10 10 13 9 15 10.5C17.5 10 20 11.5 20 14.5C20 16 19 17 18 17H4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> Cloudflare</span>
+        </div>
+      </div>
+      <div class="trust-block">
+        <h5>Conformidade e Transparência</h5>
+        <div class="trust-badge">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L14.9 8.6L22 9.3L16.8 14.1L18.2 21L12 17.4L5.8 21L7.2 14.1L2 9.3L9.1 8.6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          Consulte nossa reputação no Reclame Aqui
+        </div>
+        <div class="trust-badge">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 9L11 12L16 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Site 100% em conformidade com a LGPD
+        </div>
+      </div>
+    </div>
+    <div class="footer-styles-row">
+      <span>Estilos:</span>
+      <a href="#hero">Executivo(a)</a><span class="sep">|</span>
+      <a href="#hero">Corporativo neutro</a><span class="sep">|</span>
+      <a href="#hero">Casual elegante</a><span class="sep">|</span>
+      <a href="#hero">Fundo estúdio</a>
+    </div>
+    <div class="footer-top">
+      <div class="logo" style="font-size:17px;">
+        <svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="15" rx="3" stroke="#2fe38b" stroke-width="1.7"/><circle cx="12" cy="12.5" r="4" stroke="#2fe38b" stroke-width="1.7"/></svg>
+        PhotoPRO<sup>™</sup>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h5>Produto</h5>
+          <a href="#hero">Gerar minha foto</a>
+          <a href="#como-funciona">Como funciona</a>
+          <a href="#vantagens">Vantagens</a>
+        </div>
+        <div class="footer-col">
+          <h5>Suporte</h5>
+          <a href="#">Central de Ajuda</a>
+          <a href="#">Política de Reembolso</a>
+          <a href="#">Fale Conosco</a>
+        </div>
+        <div class="footer-col">
+          <h5>Legal</h5>
+          <a href="#">Termos de Uso</a>
+          <a href="#">Política de Privacidade</a>
+          <a href="#">Cookie Policy</a>
+        </div>
+        <div class="footer-col">
+          <h5>Central de Ajuda</h5>
+          <a href="#faq">Perguntas Frequentes</a>
+          <a href="#">Sobre Nós</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="copyright">Copyright © 2026 PhotoPRO™</span>
+    </div>
+    <p class="disclaimer">As imagens de exemplo usadas nesta página são ilustrações genéricas. O resultado final varia conforme a foto enviada, a iluminação e outros fatores. O PhotoPRO não garante um resultado específico nem aprovação em processos seletivos, e não substitui verificação de identidade profissional. Em conformidade com a LGPD (Lei 13.709/2018), fotos enviadas são tratadas exclusivamente para geração do resultado solicitado, sem uso para outras finalidades, com direito de exclusão a qualquer momento mediante solicitação. Compras pela internet contam com direito de arrependimento de 7 dias, conforme o Art. 49 do Código de Defesa do Consumidor, a ser exercido pelos canais de suporte.</p>
+  </div>
+</footer>
+
+<div class="app-overlay" id="appOverlay">
+  <div class="app-overlay-inner">
+    <button class="app-overlay-close" id="appOverlayClose" aria-label="Fechar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+
+    <div class="app-shell">
+      <div class="steps-row">
+        <div class="step-pill active" data-step-pill="1"><span class="step-num">1</span> Verificar foto</div>
+        <div class="step-pill" data-step-pill="2"><span class="step-num">2</span> Escolher estilo</div>
+        <div class="step-pill" data-step-pill="3"><span class="step-num">3</span> Processando</div>
+        <div class="step-pill" data-step-pill="4"><span class="step-num">4</span> Resultado</div>
+      </div>
+
+      <!-- STEP 1: quality check -->
+      <div class="app-panel visible" data-panel="1">
+        <div class="quality-thumb-row">
+          <div class="quality-thumb" id="qualityThumb"></div>
+          <div>
+            <div class="quality-filename" id="qualityFileName">selfie.jpg</div>
+            <div class="quality-sub">Confira os pontos abaixo antes de continuar</div>
+          </div>
+        </div>
+        <div class="quality-tips">
+          <div class="quality-tip avoid">
+            <div class="tip-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12L8 8L12 14L16 6L20 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="tip-text"><strong>Evite fotos tremidas</strong><span>Segure o celular firme e espere o foco antes de tirar a foto</span></div>
+            <div class="tip-mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+          </div>
+          <div class="quality-tip avoid">
+            <div class="tip-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2V5M12 19V22M4.2 4.2L6.3 6.3M17.7 17.7L19.8 19.8M2 12H5M19 12H22M4.2 19.8L6.3 17.7M17.7 6.3L19.8 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+            <div class="tip-text"><strong>Pouca iluminação atrapalha</strong><span>Prefira um ambiente bem iluminado, de frente para a luz</span></div>
+            <div class="tip-mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+          </div>
+          <div class="quality-tip avoid">
+            <div class="tip-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 15C4 11 7.5 8 12 8C16.5 8 20 11 20 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="2" y="15" width="20" height="3" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg></div>
+            <div class="tip-text"><strong>Tire chapéus, bonés e óculos escuros</strong><span>Seu rosto precisa estar totalmente visível</span></div>
+            <div class="tip-mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+          </div>
+          <div class="quality-tip ok">
+            <div class="tip-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/><path d="M8.5 14.5C9.5 15.5 14.5 15.5 15.5 14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+            <div class="tip-text"><strong>Olhe para a câmera</strong><span>Rosto centralizado, sem sorriso forçado, funciona melhor</span></div>
+            <div class="tip-mark"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+          </div>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-ghost" id="retakeBtn">Trocar foto</button>
+          <button class="btn btn-primary" id="toStep2FromQuality">Minha foto está boa</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: style -->
+      <div class="app-panel" data-panel="2">
+        <div class="style-grid">
+          <div class="style-card" data-style="Executivo(a)">
+            <div class="style-swatch"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1c1c1f"/><rect x="0" y="65" width="100" height="35" fill="#0d1f16"/><circle cx="50" cy="38" r="22" fill="#33333a"/><rect x="34" y="66" width="32" height="14" fill="#0d1f16"/></svg></div>
+            <h4>Executivo(a)</h4><span>Terno + fundo escritório</span>
+          </div>
+          <div class="style-card" data-style="Corporativo neutro">
+            <div class="style-swatch"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#26262a"/><circle cx="50" cy="38" r="22" fill="#3a3a41"/><rect x="34" y="66" width="32" height="34" fill="#16161a"/></svg></div>
+            <h4>Corporativo neutro</h4><span>Fundo cinza liso</span>
+          </div>
+          <div class="style-card" data-style="Casual elegante">
+            <div class="style-swatch"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#20221f"/><circle cx="50" cy="38" r="22" fill="#3a3d38"/><rect x="34" y="66" width="32" height="34" fill="#2fe38b" opacity=".5"/></svg></div>
+            <h4>Casual elegante</h4><span>Sem gravata, tom leve</span>
+          </div>
+          <div class="style-card" data-style="Fundo estúdio">
+            <div class="style-swatch"><svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#101012"/><circle cx="50" cy="50" r="45" fill="#1c1c1f"/><circle cx="50" cy="38" r="22" fill="#3a3a41"/></svg></div>
+            <h4>Fundo estúdio</h4><span>Fundo infinito neutro</span>
+          </div>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-ghost" data-back="1">Voltar</button>
+          <button class="btn btn-primary" id="toStep3" disabled>Gerar minha foto</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: friction loading (sunk cost) -->
+      <div class="app-panel" data-panel="3">
+        <div class="friction-wrap">
+          <div class="friction-trust-row">
+            <span class="friction-trust-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 7V4.5C9 3.7 9.7 3 10.5 3H13.5C14.3 3 15 3.7 15 4.5V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 7L7 19.5C7.1 20.3 7.8 21 8.6 21H15.4C16.2 21 16.9 20.3 17 19.5L18 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11V17M14 11V17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Sua selfie é privada e é apagada após o processamento</span>
+          </div>
+
+          <div class="friction-preview">
+            <div class="friction-preview-ring">
+              <svg viewBox="0 0 100 100">
+                <circle class="ring-bg" cx="50" cy="50" r="44"/>
+                <circle class="ring-fg" id="frictionRing" cx="50" cy="50" r="44" stroke-dasharray="276.5" stroke-dashoffset="276.5"/>
+              </svg>
+            </div>
+            <div class="friction-preview-img" id="frictionPreviewImg">
+              <svg viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="frictionGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#26302b"/><stop offset="100%" stop-color="#101413"/></linearGradient></defs>
+                <rect width="300" height="340" fill="url(#frictionGrad)"/>
+                <path d="M55 340C55 230 65 180 150 180C235 180 245 230 245 340Z" fill="#1e2723"/>
+                <path d="M90 340C90 240 95 205 150 205C205 205 210 240 210 340Z" fill="#2fe38b" opacity=".85"/>
+                <circle cx="150" cy="110" r="70" fill="#dcdcd6"/>
+              </svg>
+            </div>
+            <div class="friction-pct" id="frictionPct">0%</div>
+          </div>
+
+          <div class="friction-stage-title" id="frictionStageTitle">Analisando sua selfie</div>
+          <div class="friction-stage-sub" id="frictionStageSub">Detectando os pontos do seu rosto para preservar sua identidade</div>
+
+          <div class="friction-checklist" id="frictionChecklist"></div>
+
+          <div class="friction-fact">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.9 8.6L22 9.3L16.8 14.1L18.2 21L12 17.4L5.8 21L7.2 14.1L2 9.3L9.1 8.6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            <span id="frictionFactText">Mais de 40 pontos do seu rosto são analisados para manter sua identidade real.</span>
+          </div>
+
+          <div class="friction-social">
+            <span class="live-dot-sm"></span> <span id="frictionSocialText">Outras 6 pessoas estão gerando fotos agora</span>
+          </div>
+
+          <div class="friction-warning" id="frictionWarning">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 9V13M12 17H12.01M10.3 3.9L2.5 17.5C2 18.3 2.6 19.5 3.5 19.5H20.5C21.4 19.5 22 18.3 21.5 17.5L13.7 3.9C13.3 3.1 10.7 3.1 10.3 3.9Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            <span>Não feche esta aba — você já concluiu <strong id="frictionWarningPct">70</strong>% do processamento e pode perder o progresso.</span>
+          </div>
+
+          <p class="gen-error" id="genError"></p>
+        </div>
+
+        <div class="friction-engage" id="frictionEngage">
+          <div class="friction-engage-card">
+            <button class="friction-engage-close" id="frictionEngageClose" aria-label="Fechar">&times;</button>
+            <h4>Pra qual finalidade você vai usar essa foto?</h4>
+            <p>Isso ajuda a ajustar o enquadramento e o estilo final do resultado.</p>
+            <div class="friction-engage-options">
+              <button class="chip" data-use="LinkedIn">LinkedIn</button>
+              <button class="chip" data-use="Currículo">Currículo</button>
+              <button class="chip" data-use="Rede social">Rede social</button>
+              <button class="chip" data-use="Outro">Outro</button>
+            </div>
+            <button class="friction-engage-skip" id="frictionEngageSkip">Pular</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: result -->
+      <div class="app-panel" data-panel="4">
+        <div class="result-grid">
+          <div class="result-frame locked" id="resultFrame">
+            <div class="lock-chip" id="lockChip">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="currentColor" stroke-width="2"/></svg>
+              Bloqueado
+            </div>
+            <div class="result-img">
+              <svg viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="studioBg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#26302b"/><stop offset="100%" stop-color="#101413"/></linearGradient></defs>
+                <rect width="300" height="340" fill="url(#studioBg2)"/>
+                <path d="M55 340C55 230 65 180 150 180C235 180 245 230 245 340Z" fill="#1e2723"/>
+                <path d="M90 340C90 240 95 205 150 205C205 205 210 240 210 340Z" fill="#2fe38b" opacity=".85"/>
+                <circle cx="150" cy="110" r="70" fill="#dcdcd6"/>
+              </svg>
+            </div>
+            <div class="watermark"><span>PREVIEW</span></div>
+          </div>
+          <div class="price-card">
+            <div class="price-old">R$ 29,90</div>
+            <div class="price-row">
+              <span class="price-new">R$ 9,90</span>
+              <span class="price-tag">CUSTO ÚNICO</span>
+            </div>
+            <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Pagamento único — sem assinatura, sem cobrança recorrente.</p>
+            <ul class="price-list">
+              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Download em alta resolução</li>
+              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Sem marca d'água</li>
+              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Sem cadastro de cartão para gerar o preview</li>
+              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Liberação imediata após o pagamento</li>
+            </ul>
+            <button class="btn btn-primary btn-block" id="unlockBtn">Desbloquear em HD — R$ 9,90</button>
+            <button class="btn btn-ghost btn-block" id="downloadBtn" style="display:none;margin-top:10px;">Baixar imagem</button>
+          </div>
+        </div>
+
+        <!-- Loading real pós-pagamento: só aparece depois que o pagamento é confirmado -->
+        <div class="generating-state" id="generatingState" style="display:none;">
+          <div class="loading-ring" style="width:64px;height:64px;margin:0 auto 18px;">
+            <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="#28282c" stroke-width="4"/><circle cx="25" cy="25" r="20" fill="none" stroke="#2fe38b" stroke-width="4" stroke-dasharray="90 200" stroke-linecap="round"/></svg>
+          </div>
+          <h3 style="margin:0 0 6px;">Processando pagamento</h3>
+          <p id="generatingMsg" style="color:var(--muted);font-size:14px;margin:0;">Aguarde um instante...</p>
+        </div>
+
+        <div class="panel-actions">
+          <button class="btn btn-ghost" id="restartBtn">Começar de novo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div id="modalPayForm">
+      <h3>Pagamento único</h3>
+      <p class="desc">Você será redirecionado para o ambiente seguro do Mercado Pago para concluir o pagamento.</p>
+      <div class="pay-total">
+        <span>Total</span>
+        <strong>R$ 9,90</strong>
+      </div>
+      <button class="btn btn-primary btn-block" id="payBtn">Pagar com Mercado Pago</button>
+      <div class="modal-lock-note">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="currentColor" stroke-width="1.8"/></svg>
+        Pagamento único. Sem assinatura, sem renovação automática.
+      </div>
+      <p class="modal-legal-note">Ao continuar, você concorda com os <a href="#">Termos de Uso</a> e a <a href="#">Política de Privacidade</a>. Direito de arrependimento de 7 dias garantido pelo CDC.</p>
+    </div>
+    <div class="modal-processing" id="modalProcessing">
+      <div class="loading-ring" style="width:64px;height:64px;">
+        <svg viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="#28282c" stroke-width="4"/><circle cx="25" cy="25" r="20" fill="none" stroke="#2fe38b" stroke-width="4" stroke-dasharray="90 200" stroke-linecap="round"/></svg>
+      </div>
+      <p style="color:var(--muted);font-size:14px;margin-top:14px;">Redirecionando para o Mercado Pago…</p>
+    </div>
+    <div class="modal-success" id="modalSuccess">
+      <div class="check-circle">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Pagamento confirmado</h3>
+      <p class="desc">Sua foto em alta resolução já está liberada.</p>
+      <button class="btn btn-primary btn-block" id="modalDoneBtn">Ver minha foto</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- live counter ----------
+(function(){
+  var heroEl = document.getElementById('heroCounterNum');
+  var val = 4812;
+  setInterval(function(){
+    val += Math.floor(Math.random()*3);
+    if(heroEl) heroEl.textContent = val.toLocaleString('pt-BR');
+  }, 4000);
+})();
+
+// ---------- utilitário: preenche um trilho de scroll infinito ----------
+// Os carrosséis usam a técnica de duplicar o conteúdo e animar
+// translateX(-50%): quando o trilho tem EXATAMENTE 2 cópias idênticas, o
+// "salto" de volta ao início fica invisível. O bug era que 2 cópias fixas
+// não bastam em telas largas (monitor grande, janela maximizada) — o
+// trilho terminava antes de cobrir a tela toda, aparecendo um vão vazio
+// até reiniciar. Esta função mede a largura real do contêiner visível e
+// duplica o conteúdo o quanto for preciso (sempre em número par de
+// cópias, pra manter o "salto" de -50% invisível) para nunca sobrar vão.
+function fillLoopTrack(track, buildOneCopyHtml){
+  if(!track) return;
+  var viewport = track.parentElement;
+  var copies = 2;
+  track.innerHTML = buildOneCopyHtml(0) + buildOneCopyHtml(1);
+  var maxCopies = 24; // trava de segurança
+  while(viewport && track.scrollWidth < viewport.clientWidth * 2.5 && copies < maxCopies){
+    track.innerHTML += buildOneCopyHtml(copies);
+    copies++;
+  }
+  if(copies % 2 !== 0){
+    track.innerHTML += buildOneCopyHtml(copies);
+    copies++;
+  }
+}
+
+// ---------- infra logo marquee ----------
+(function(){
+  var items = [
+    { name:'Vercel', icon:'<path d="M12 3.5L21.5 20H2.5Z" fill="#fff"/>' },
+    { name:'Cloudflare', icon:'<path d="M5 17.5C3.1 17.5 1.5 15.9 1.5 14C1.5 12.2 2.9 10.7 4.7 10.5C5.3 8.2 7.4 6.5 9.9 6.5C12.4 6.5 14.5 8.1 15.2 10.4C15.5 10.3 15.8 10.3 16.1 10.3C18.3 10.3 20 12 20 14.2C20 15.9 18.6 17.5 16.8 17.5H5Z" fill="#fff"/>' },
+    { name:'Amazon Web Services (AWS)', icon:'<path d="M3 16C8 19.2 16 19.2 21 16" stroke="#fff" stroke-width="1.9" stroke-linecap="round" fill="none"/><path d="M17.8 14.8L21 16L19.8 19.2" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>' },
+    { name:'Google Cloud', icon:'<path d="M8 17.5C5.5 17.5 3.5 15.5 3.5 13C3.5 10.8 5.1 9 7.2 8.6C7.9 6.1 10.1 4.3 12.8 4.3C15.9 4.3 18.5 6.6 18.9 9.6C21 10 22.5 11.8 22.5 14C22.5 16.2 20.7 18 18.5 18H8Z" fill="#fff"/>' },
+    { name:'Netlify', icon:'<path d="M4 16L10 4L14 10L20 4L16 20L10 14Z" fill="#fff"/>' },
+    { name:'Supabase', icon:'<path d="M13 2.5L5.5 14H11L10 21.5L18.5 9H13Z" fill="#fff"/>' },
+    { name:'Firebase', icon:'<path d="M6.5 20L9 3L13.5 12.5L15.5 9L17.5 20Z" fill="#fff"/>' }
+  ];
+  var track = document.getElementById('marqueeTrack');
+  function buildOneCopy(){
+    var html = '';
+    items.forEach(function(f){
+      html += '<div class="marquee-item"><svg viewBox="0 0 24 24">'+f.icon+'</svg>'+f.name+'</div>';
+    });
+    return html;
+  }
+  fillLoopTrack(track, buildOneCopy);
+})();
+
+// ---------- example carousel ----------
+(function(){
+  var track = document.getElementById('exampleTrack');
+  if(!track) return;
+  // Fotos reais de antes/depois (enviadas pelo usuário). Executivo(a) tem 2
+  // exemplos (pessoas diferentes) pra mostrar variedade dentro do mesmo estilo.
+  var examples = [
+    { name:'Executivo(a)', before:'/images/exemplos/executivo-1-antes.webp', after:'/images/exemplos/executivo-1-depois.webp' },
+    { name:'Corporativo neutro', before:'/images/exemplos/corporativo-antes.webp', after:'/images/exemplos/corporativo-depois.webp' },
+    { name:'Casual elegante', before:'/images/exemplos/casual-antes.webp', after:'/images/exemplos/casual-depois.webp' },
+    { name:'Fundo estúdio', before:'/images/exemplos/estudio-antes.webp', after:'/images/exemplos/estudio-depois.webp' },
+    { name:'Executivo(a)', before:'/images/exemplos/executivo-2-antes.webp', after:'/images/exemplos/executivo-2-depois.webp' }
+  ];
+  function buildOneCopy(){
+    var out = '';
+    examples.forEach(function(ex, i){
+      var delay = (i * 0.9) + 's';
+      out += '<div class="example-card">'+
+        '<div class="example-img">'+
+          '<div class="example-layer is-before"><img src="'+ex.before+'" alt="Antes — foto original" loading="lazy"></div>'+
+          '<div class="example-layer is-after" style="animation-delay:'+delay+';"><img src="'+ex.after+'" alt="Depois — resultado estilo '+ex.name+'" loading="lazy"></div>'+
+        '</div>'+
+        '<div class="example-caption">'+
+          '<span class="name">'+ex.name+'</span>'+
+          '<span class="example-badge-wrap">'+
+            '<span class="badge badge-before">ANTES</span>'+
+            '<span class="badge badge-after" style="animation-delay:'+delay+';">DEPOIS</span>'+
+          '</span>'+
+        '</div>'+
+      '</div>';
+    });
+    return out;
+  }
+  fillLoopTrack(track, buildOneCopy);
+})();
+
+// ---------- features carousel ----------
+(function(){
+  var track = document.getElementById('featuresTrack');
+  if(!track) return;
+  var items = [
+    { icon:'<path d="M4 20V17C4 14.8 7.6 13 12 13C16.4 13 20 14.8 20 17V20" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.8"/>',
+      title:'Roupa social', desc:'Terno, blazer ou traje social aplicado automaticamente sobre a sua selfie.' },
+    { icon:'<rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 15L8 11L12 14L21 7" stroke="currentColor" stroke-width="1.8"/>',
+      title:'Fundo de estúdio', desc:'Escolha entre fundo neutro, estúdio ou escritório corporativo.' },
+    { icon:'<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M12 2V5M12 19V22M4.2 4.2L6.3 6.3M17.7 17.7L19.8 19.8M2 12H5M19 12H22M4.2 19.8L6.3 17.7M17.7 6.3L19.8 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+      title:'Iluminação corrigida', desc:'Ajuste automático de luz e cor para um resultado com aparência de estúdio.' },
+    { icon:'<rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 8H16M8 12H16M8 16H12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+      title:'Pronto para currículo e LinkedIn', desc:'Formato e proporção ideais para perfis profissionais e processos seletivos.' },
+    { icon:'<path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+      title:'Alta resolução', desc:'Download em alta resolução, sem marca d\'água, após a confirmação do pagamento.' },
+    { icon:'<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7V12L15 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+      title:'Pronto em minutos', desc:'Sem agendar fotógrafo, sem estúdio. Envie a selfie e receba o resultado na hora.' }
+  ];
+  function buildOneCopy(){
+    var out = '';
+    items.forEach(function(f){
+      out += '<div class="feature">'+
+        '<div class="icon-wrap"><svg class="icon" viewBox="0 0 24 24" fill="none">'+f.icon+'</svg></div>'+
+        '<h3>'+f.title+'</h3>'+
+        '<p>'+f.desc+'</p>'+
+      '</div>';
+    });
+    return out;
+  }
+  fillLoopTrack(track, buildOneCopy);
+})();
+
+// ---------- reviews ----------
+(function(){
+  var grid = document.getElementById('reviewsGrid');
+  var pagination = document.getElementById('reviewsPagination');
+  if(!grid) return;
+  var reviews = [
+    { stars:5, text:'"Troquei a foto do LinkedIn e acabei usando a mesma no Instagram e no WhatsApp também. Ficou com uma cara de estúdio profissional mesmo 😄"', name:'Marina C.', role:'Analista de RH' },
+    { stars:5, text:'"Troquei a foto do currículo numa sexta à noite e na segunda já tinha retorno de recrutador. Só isso já valeu a pena."', name:'Diego A.', role:'Desenvolvedor' },
+    { stars:4, text:'"Uso mais pro Instagram do trabalho do que qualquer coisa. Demorei um pouco pra decidir entre os estilos porque queria acertar, mas o resultado compensou."', name:'Patrícia L.', role:'Designer' },
+    { stars:5, text:'"Economizei o valor de um fotógrafo e ainda troquei a foto do WhatsApp Business. Ficou até melhor do que eu esperava."', name:'Rafael S.', role:'Consultor' },
+    { stars:5, text:'"Fiquei meio insegura no começo, mas o resultado me convenceu na hora. Virou minha foto oficial em tudo: LinkedIn, Instagram e até no grupo da família no zap."', name:'Camila R.', role:'Product Manager' },
+    { stars:4, text:'"Coloquei no Facebook e no LinkedIn no mesmo dia, ficou super profissional. Levou uns minutinhos a mais do que eu imaginava, mas valeu a espera."', name:'Bruno T.', role:'Analista financeiro' },
+    { stars:5, text:'"Testei numa selfie qualquer do celular e nem parece a mesma foto, ficou show. Já recomendei pra galera do grupo do trabalho."', name:'Juliana M.', role:'RH Business Partner' },
+    { stars:5, text:'"Sempre adiei trocar a foto do Instagram por preguiça e falta de tempo. Isso aqui resolveu em minutos, sem drama."', name:'Thiago F.', role:'Product Designer' },
+    { stars:4, text:'"Ficou muito boa pro Facebook e pro perfil da empresa. Só queria ter mais opções de fundo pra escolher, mas nada que atrapalhe."', name:'Larissa P.', role:'Analista de Marketing' },
+    { stars:5, text:'"Cara, ficou surreal o resultado. Já troquei em todas as redes — Insta, Face, WhatsApp — tá todo mundo perguntando onde eu fiz."', name:'Eduardo N.', role:'Engenheiro' },
+    { stars:5, text:'"Precisava de uma foto rápida pro WhatsApp Business e pro site do escritório, essa aqui salvou minha vida, literalmente em minutos."', name:'Beatriz S.', role:'Advogada' },
+    { stars:4, text:'"Gostei bastante, ficou com cara de estúdio de verdade. Uso até no perfil do Facebook agora, ficou bem natural."', name:'Rodrigo A.', role:'Gerente de Projetos' }
+  ];
+  var PER_PAGE = 6;
+  function starsSvg(n){
+    var s = '';
+    for(var i=0;i<5;i++){
+      s += '<svg width="14" height="14" viewBox="0 0 24 24" fill="'+(i<n?'currentColor':'none')+'" stroke="currentColor" stroke-width="1.5"><path d="M12 2L14.9 8.6L22 9.3L16.8 14.1L18.2 21L12 17.4L5.8 21L7.2 14.1L2 9.3L9.1 8.6Z"/></svg>';
+    }
+    return s;
+  }
+  function buildCards(list){
+    var out = '';
+    list.forEach(function(r){
+      out += '<div class="review-card">'+
+        '<div class="review-stars">'+starsSvg(r.stars)+'</div>'+
+        '<p class="review-text">'+r.text+'</p>'+
+        '<div class="review-author"><span class="review-avatar">'+r.name.charAt(0)+'</span><div><strong>'+r.name+'</strong><span>'+r.role+'</span></div></div>'+
+      '</div>';
+    });
+    return out;
+  }
+  function renderPage(page){
+    grid.classList.add('fade');
+    setTimeout(function(){
+      var start = (page-1)*PER_PAGE;
+      grid.innerHTML = buildCards(reviews.slice(start, start+PER_PAGE));
+      grid.classList.remove('fade');
+    }, 180);
+    if(pagination){
+      pagination.querySelectorAll('.page-btn').forEach(function(b){
+        b.classList.toggle('active', parseInt(b.dataset.page,10) === page);
+      });
+    }
+  }
+  if(pagination){
+    pagination.querySelectorAll('.page-btn').forEach(function(b){
+      b.addEventListener('click', function(){ renderPage(parseInt(b.dataset.page,10)); });
+    });
+  }
+  renderPage(1);
+})();
+
+// ---------- app flow ----------
+(function(){
+  var panels = document.querySelectorAll('.app-panel');
+  var pills = document.querySelectorAll('.step-pill');
+  function goTo(step){
+    panels.forEach(function(p){ p.classList.toggle('visible', p.dataset.panel == step); });
+    pills.forEach(function(p, i){
+      p.classList.toggle('active', (i+1) == step);
+      p.classList.toggle('done', (i+1) < step);
+    });
+  }
+
+  var silhouetteSvg = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#1b1b1e"/><circle cx="50" cy="38" r="18" fill="#2a2a2e"/><path d="M20 90C20 65 32 55 50 55C68 55 80 65 80 90Z" fill="#2a2a2e"/></svg>';
+
+  // ---- estado real do pedido (integra com o backend) ----
+  var currentOrderId = null;
+  var lastFullImage = null;
+  var paidPollInterval = null;
+
+  var genErrorEl = document.getElementById('genError');
+  function showGenErrorInline(msg){
+    if(!genErrorEl) return;
+    genErrorEl.textContent = msg;
+    genErrorEl.classList.add('show');
+  }
+  function hideGenErrorInline(){
+    if(!genErrorEl) return;
+    genErrorEl.classList.remove('show');
+  }
+
+  // ---- full-page overlay ----
+  var appOverlay = document.getElementById('appOverlay');
+  function openAppOverlay(){
+    appOverlay.classList.add('open');
+    appOverlay.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('overlay-active');
+  }
+  function closeAppOverlay(){
+    appOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    document.body.classList.remove('overlay-active');
+  }
+  document.getElementById('appOverlayClose').addEventListener('click', closeAppOverlay);
+
+  // ---- quality check (step 1) ----
+  var qualityThumb = document.getElementById('qualityThumb');
+  var qualityFileName = document.getElementById('qualityFileName');
+  function fillQualityCheck(name){
+    qualityThumb.innerHTML = silhouetteSvg;
+    qualityFileName.textContent = name || 'selfie.jpg';
+  }
+  document.getElementById('toStep2FromQuality').addEventListener('click', function(){ goTo(2); });
+
+  document.querySelectorAll('[data-back]').forEach(function(b){
+    b.addEventListener('click', function(){ goTo(parseInt(b.dataset.back)); });
+  });
+
+  // ---- style selection (step 2) ----
+  var styleCards = document.querySelectorAll('.style-card');
+  var toStep3 = document.getElementById('toStep3');
+  var selectedStyleName = null;
+  styleCards.forEach(function(c){
+    c.addEventListener('click', function(){
+      styleCards.forEach(function(x){x.classList.remove('selected');});
+      c.classList.add('selected');
+      selectedStyleName = c.dataset.style;
+      toStep3.disabled = false;
+    });
+  });
+
+  // ---- hero quick-start card ----
+  var heroDropzone = document.getElementById('heroDropzone');
+  var heroFileInput = document.getElementById('heroFileInput');
+  var heroPickFileBtn = document.getElementById('heroPickFileBtn');
+  var heroGenerateBtn = document.getElementById('heroGenerateBtn');
+  var heroFileName = null;
+  var heroFileObj = null;
+  var heroDefaultTitle = 'Arraste sua selfie aqui';
+  var heroDefaultSub = 'ou clique para escolher um arquivo — JPG ou PNG';
+
+  function handleHeroFile(name, file){
+    heroFileName = name || 'selfie.jpg';
+    if(file) heroFileObj = file;
+    heroDropzone.querySelector('h3').textContent = 'Selfie recebida';
+    heroDropzone.querySelector('p').textContent = heroFileName;
+    heroPickFileBtn.textContent = 'Trocar arquivo';
+  }
+  function resetHeroDropzone(){
+    heroFileName = null;
+    heroFileObj = null;
+    heroFileInput.value = '';
+    heroDropzone.querySelector('h3').textContent = heroDefaultTitle;
+    heroDropzone.querySelector('p').textContent = heroDefaultSub;
+    heroPickFileBtn.textContent = 'Escolher arquivo';
+  }
+
+  heroPickFileBtn.addEventListener('click', function(e){ e.stopPropagation(); heroFileInput.click(); });
+  heroDropzone.addEventListener('click', function(){ heroFileInput.click(); });
+  heroFileInput.addEventListener('change', function(){
+    if(heroFileInput.files && heroFileInput.files[0]) handleHeroFile(heroFileInput.files[0].name, heroFileInput.files[0]);
+  });
+  ['dragenter','dragover'].forEach(function(evt){
+    heroDropzone.addEventListener(evt, function(e){ e.preventDefault(); heroDropzone.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(function(evt){
+    heroDropzone.addEventListener(evt, function(e){ e.preventDefault(); heroDropzone.classList.remove('drag'); });
+  });
+  heroDropzone.addEventListener('drop', function(e){
+    var f = e.dataTransfer.files && e.dataTransfer.files[0];
+    handleHeroFile(f ? f.name : 'selfie.jpg', f || null);
+  });
+
+  heroGenerateBtn.addEventListener('click', function(){
+    if(!heroFileObj){
+      alert('Selecione uma selfie (JPG ou PNG) antes de continuar.');
+      return;
+    }
+    fillQualityCheck(heroFileName || 'selfie.jpg');
+    openAppOverlay();
+    goTo(1);
+  });
+
+  document.getElementById('retakeBtn').addEventListener('click', function(){
+    closeAppOverlay();
+    resetHeroDropzone();
+    var heroEl = document.getElementById('hero');
+    if(heroEl) heroEl.scrollIntoView({behavior:'smooth'});
+  });
+
+  // ---- friction loading (step 3) — sunk cost, ~4min12s ----
+  // O tempo de espera aqui é só percepção de valor. Nenhuma chamada à
+  // OpenAI acontece nesta etapa: em paralelo, o único request de rede é
+  // POST /api/orders, que faz apenas validação local da selfie no servidor.
+  // A geração real só ocorre depois do pagamento aprovado (ver
+  // routes/webhooks.js) — durante ela, o usuário vê um loading genérico de
+  // "processando pagamento", sem que o sistema afirme que a foto já existe.
+  var frictionChecklist = document.getElementById('frictionChecklist');
+  var frictionRing = document.getElementById('frictionRing');
+  var frictionPct = document.getElementById('frictionPct');
+  var frictionStageTitle = document.getElementById('frictionStageTitle');
+  var frictionStageSub = document.getElementById('frictionStageSub');
+  var frictionPreviewImg = document.getElementById('frictionPreviewImg');
+  var frictionFactText = document.getElementById('frictionFactText');
+  var frictionSocialText = document.getElementById('frictionSocialText');
+  var frictionWarning = document.getElementById('frictionWarning');
+  var frictionWarningPct = document.getElementById('frictionWarningPct');
+  var frictionEngage = document.getElementById('frictionEngage');
+  var frictionEngageSkip = document.getElementById('frictionEngageSkip');
+  var frictionEngageClose = document.getElementById('frictionEngageClose');
+  var RING_CIRCUMFERENCE = 276.5;
+  // fast start (62% of progress in just 18% of the time), then a slower "sunk cost" finish
+  var CURVE_TIME_SPLIT = 0.18;
+  var CURVE_PCT_SPLIT = 0.62;
+  function progressCurve(timeFrac){
+    timeFrac = Math.min(1, Math.max(0, timeFrac));
+    if(timeFrac <= CURVE_TIME_SPLIT){
+      return (timeFrac / CURVE_TIME_SPLIT) * CURVE_PCT_SPLIT;
+    }
+    var t2 = (timeFrac - CURVE_TIME_SPLIT) / (1 - CURVE_TIME_SPLIT);
+    return CURVE_PCT_SPLIT + t2 * (1 - CURVE_PCT_SPLIT);
+  }
+  var MICRO_DONE_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var MICRO_PENDING_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg>';
+  var MICRO_ACTIVE_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="14 43"/></svg>';
+
+  // 8 stages, ~4m12s total — a deliberadamente vagarosa construção de percepção de valor
+  var stages = [
+    { title:'Analisando sua selfie', sub:'Detectando os pontos do seu rosto para preservar sua identidade', dur:28000,
+      items:['Detectando pontos e proporções do rosto','Calculando simetria facial','Preservando sua identidade original'] },
+    { title:'Aplicando roupa social', sub:'Vestindo você com terno ou blazer de forma realista', dur:32000,
+      items:['Ajustando caimento do tecido','Adaptando cor ao tom de pele','Alinhando ombros e colarinho'] },
+    { title:'Ajustando iluminação de estúdio', sub:'Corrigindo sombras para um resultado com aparência profissional', dur:34000,
+      items:['Equalizando exposição do rosto','Suavizando sombras duras','Adicionando luz de preenchimento'] },
+    { title:'Trocando o fundo', sub:'Substituindo o fundo pelo estilo escolhido', dur:30000,
+      items:['Recortando contorno com precisão','Aplicando fundo do estilo selecionado','Ajustando profundidade de campo'] },
+    { title:'Sincronizando tom de pele', sub:'Deixando a pele com aparência natural de estúdio', dur:34000,
+      items:['Equilibrando tom de pele','Suavizando textura sem perder realismo','Corrigindo brilho e reflexos'] },
+    { title:'Removendo ruídos e imperfeições', sub:'Refinando pequenos detalhes da imagem', dur:30000,
+      items:['Reduzindo ruído digital','Corrigindo pixels fora do padrão','Aplicando nitidez seletiva no rosto'] },
+    { title:'Renderizando em alta resolução', sub:'Preparando a imagem em alta definição para telas e impressão', dur:36000,
+      items:['Renderizando camadas finais','Otimizando compressão sem perda de qualidade','Gerando arquivo em alta resolução'] },
+    { title:'Aplicando retoques finais', sub:'Últimos ajustes antes da entrega', dur:28000,
+      items:['Conferindo simetria final','Aplicando toque profissional de estúdio','Validando qualidade de entrega'] }
+  ];
+  var TOTAL_DURATION = stages.reduce(function(sum, s){ return sum + s.dur; }, 0);
+
+  var facts = [
+    'Mais de 40 pontos do seu rosto são analisados para manter sua identidade real.',
+    'O ajuste de cor de pele e contraste segue o mesmo padrão usado em estúdios profissionais.',
+    'A resolução final é otimizada para currículo, LinkedIn e processos seletivos.',
+    'Cada estilo passa por um ajuste fino de sombra e luz antes de ser finalizado.',
+    'Sua selfie original é usada apenas durante este processamento e depois descartada.',
+    'Fotos com fundo neutro tendem a passar mais credibilidade em processos seletivos.',
+    'Recrutadores levam poucos segundos para formar uma primeira impressão pela foto do perfil.',
+    'O contraste entre roupa e fundo é ajustado para dar mais destaque ao seu rosto.',
+    'Perfis com foto profissional tendem a receber mais visualizações no LinkedIn.',
+    'Cada imagem passa por uma verificação de qualidade antes de ficar pronta.'
+  ];
+
+  var loadingTimers = [];
+  var progressInterval = null;
+  var factTimer = null;
+  var socialTimer = null;
+  var factIndex = 0;
+  var socialCount = 0;
+  var selectedUsage = null;
+  var engageShown = false;
+  var warningShown = false;
+  var loadStartTime = 0;
+  var lastBlurValue = null;
+  var orderReady = false;
+  var orderFailed = false;
+  var orderFailMessage = '';
+
+  function setBlur(pct){
+    var blur = Math.round((16 - (pct/100)*16) * 10) / 10;
+    blur = Math.max(blur, 0);
+    if(blur === lastBlurValue) return;
+    lastBlurValue = blur;
+    frictionPreviewImg.style.filter = 'blur(' + blur.toFixed(1) + 'px)';
+  }
+
+  function renderMicroItems(items){
+    var html = '';
+    items.forEach(function(text, i){
+      html += '<div class="friction-check" data-m="'+i+'"><span class="chk">'+MICRO_PENDING_ICON+'</span> '+text+'</div>';
+    });
+    frictionChecklist.innerHTML = html;
+  }
+  function markMicroActive(i){
+    var el = frictionChecklist.querySelector('[data-m="'+i+'"]');
+    if(!el) return;
+    el.classList.add('active');
+    el.querySelector('.chk').innerHTML = MICRO_ACTIVE_ICON;
+  }
+  function markMicroDone(i){
+    var el = frictionChecklist.querySelector('[data-m="'+i+'"]');
+    if(!el) return;
+    el.classList.remove('active');
+    el.classList.add('done');
+    el.querySelector('.chk').innerHTML = MICRO_DONE_ICON;
+  }
+
+  function swapStageContent(stage, onSwapped){
+    frictionStageTitle.classList.add('fade-out');
+    frictionStageSub.classList.add('fade-out');
+    frictionChecklist.classList.add('fade-out');
+    var t = setTimeout(function(){
+      frictionStageTitle.textContent = stage.title;
+      frictionStageSub.textContent = stage.sub;
+      renderMicroItems(stage.items);
+      markMicroActive(0);
+      frictionStageTitle.classList.remove('fade-out');
+      frictionStageSub.classList.remove('fade-out');
+      frictionChecklist.classList.remove('fade-out');
+      if(onSwapped) onSwapped();
+    }, 260);
+    loadingTimers.push(t);
+  }
+
+  function scheduleStage(stage, startAt){
+    var t = setTimeout(function(){
+      swapStageContent(stage, function(){
+        var n = stage.items.length;
+        stage.items.forEach(function(item, i){
+          var tickAt = Math.max(300, Math.round(stage.dur * ((i+1) / n)) - 250);
+          var tt = setTimeout(function(){
+            markMicroDone(i);
+            if(i+1 < n) markMicroActive(i+1);
+          }, tickAt);
+          loadingTimers.push(tt);
+        });
+      });
+    }, startAt);
+    loadingTimers.push(t);
+  }
+
+  function showEngage(){
+    if(engageShown) return;
+    engageShown = true;
+    frictionEngage.classList.add('show');
+  }
+  function hideEngage(){
+    frictionEngage.classList.remove('show');
+  }
+
+  function stopLoading(){
+    loadingTimers.forEach(clearTimeout);
+    loadingTimers = [];
+    if(progressInterval) clearInterval(progressInterval);
+    if(factTimer) clearInterval(factTimer);
+    if(socialTimer) clearInterval(socialTimer);
+    hideEngage();
+  }
+
+  // ---- integração real: cria o pedido assim que a fricção começa ----
+  // Único request desta etapa. Faz SOMENTE validação local no servidor
+  // (formato, tamanho, resolução) — nenhuma chamada à OpenAI acontece aqui.
+  function startRealGeneration(){
+    orderReady = false;
+    orderFailed = false;
+    orderFailMessage = '';
+    hideGenErrorInline();
+
+    if(!heroFileObj){
+      orderFailed = true;
+      orderFailMessage = 'Nenhuma selfie encontrada. Volte e envie uma foto.';
+      return;
+    }
+
+    var formData = new FormData();
+    formData.append('selfie', heroFileObj);
+    formData.append('style', selectedStyleName || 'Corporativo neutro');
+
+    fetch('/api/orders', { method: 'POST', body: formData })
+      .then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+      .then(function(res){
+        if(!res.ok || !res.data.orderId){
+          orderFailed = true;
+          orderFailMessage = res.data.error || 'Não foi possível validar sua selfie.';
+          return;
+        }
+        currentOrderId = res.data.orderId;
+        orderReady = true;
+      })
+      .catch(function(){
+        orderFailed = true;
+        orderFailMessage = 'Erro ao enviar sua selfie. Verifique sua conexão e tente novamente.';
+      });
+  }
+
+  function waitForGenerationThenReveal(){
+    function check(){
+      if(orderReady){
+        goTo(4);
+      } else if(orderFailed){
+        frictionStageTitle.textContent = 'Ops, algo deu errado';
+        frictionStageSub.textContent = orderFailMessage || 'Não foi possível continuar agora.';
+        showGenErrorInline((orderFailMessage || 'Tente novamente em instantes.') + ' Você será redirecionado para tentar de novo.');
+        var backTimer = setTimeout(function(){ goTo(2); }, 3200);
+        loadingTimers.push(backTimer);
+      } else {
+        frictionStageSub.textContent = 'Só mais um instante, finalizando os últimos detalhes...';
+        var t = setTimeout(check, 1500);
+        loadingTimers.push(t);
+      }
+    }
+    var t0 = setTimeout(check, 800);
+    loadingTimers.push(t0);
+  }
+
+  function runLoading(){
+    loadingTimers.forEach(clearTimeout);
+    if(progressInterval) clearInterval(progressInterval);
+    if(factTimer) clearInterval(factTimer);
+    if(socialTimer) clearInterval(socialTimer);
+    loadingTimers = [];
+    engageShown = false;
+    warningShown = false;
+    selectedUsage = null;
+    lastBlurValue = null;
+    hideEngage();
+    hideGenErrorInline();
+    frictionWarning.classList.remove('show');
+    frictionRing.style.strokeDashoffset = RING_CIRCUMFERENCE;
+    frictionPct.textContent = '0%';
+    setBlur(0);
+
+    if(selectedStyleName){
+      stages[3].sub = 'Aplicando o estilo "' + selectedStyleName + '" escolhido por você';
+    } else {
+      stages[3].sub = 'Substituindo o fundo pelo estilo escolhido';
+    }
+
+    var elapsed = 0;
+    stages.forEach(function(stage){
+      scheduleStage(stage, elapsed);
+      elapsed += stage.dur;
+    });
+
+    loadStartTime = Date.now();
+    progressInterval = setInterval(function(){
+      var now = Date.now() - loadStartTime;
+      var pct = progressCurve(now / TOTAL_DURATION) * 100;
+      var pctRound = Math.round(pct);
+      frictionPct.textContent = pctRound + '%';
+      frictionRing.style.strokeDashoffset = (RING_CIRCUMFERENCE * (1 - pct/100)).toFixed(1);
+      setBlur(pct);
+
+      if(!engageShown && now >= TOTAL_DURATION * 0.32){
+        showEngage();
+      }
+      if(!warningShown && pctRound >= 72){
+        warningShown = true;
+        frictionWarningPct.textContent = pctRound;
+        frictionWarning.classList.add('show');
+      }
+    }, 200);
+
+    var tEnd = setTimeout(function(){
+      clearInterval(progressInterval);
+      clearInterval(factTimer);
+      clearInterval(socialTimer);
+      frictionPct.textContent = '100%';
+      frictionRing.style.strokeDashoffset = '0';
+      setBlur(100);
+      hideEngage();
+      frictionStageTitle.classList.add('fade-out');
+      frictionStageSub.classList.add('fade-out');
+      var swapT = setTimeout(function(){
+        frictionStageTitle.textContent = 'Tudo pronto';
+        frictionStageSub.textContent = 'Sua foto está pronta para ser gerada.';
+        frictionStageTitle.classList.remove('fade-out');
+        frictionStageSub.classList.remove('fade-out');
+      }, 260);
+      loadingTimers.push(swapT);
+      waitForGenerationThenReveal();
+    }, TOTAL_DURATION);
+    loadingTimers.push(tEnd);
+
+    factIndex = 0;
+    frictionFactText.textContent = facts[0];
+    factTimer = setInterval(function(){
+      factIndex = (factIndex + 1) % facts.length;
+      frictionFactText.textContent = facts[factIndex];
+    }, 7000);
+
+    socialCount = 4 + Math.floor(Math.random()*4);
+    frictionSocialText.textContent = 'Outras ' + socialCount + ' pessoas estão gerando fotos agora';
+    socialTimer = setInterval(function(){
+      socialCount += Math.random() > 0.5 ? 1 : 0;
+      frictionSocialText.textContent = 'Outras ' + socialCount + ' pessoas estão gerando fotos agora';
+    }, 5000);
+  }
+
+  document.querySelectorAll('.friction-engage-options .chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      selectedUsage = chip.dataset.use;
+      hideEngage();
+      frictionFactText.textContent = 'Perfeito! Vamos ajustar o enquadramento ideal para ' + selectedUsage + '.';
+    });
+  });
+  frictionEngageSkip.addEventListener('click', hideEngage);
+  frictionEngageClose.addEventListener('click', hideEngage);
+
+  toStep3.addEventListener('click', function(){
+    goTo(3);
+    runLoading();
+    startRealGeneration();
+  });
+
+  // ---- restart (step 4) ----
+  var originalResultImgHtml = null;
+  document.getElementById('restartBtn').addEventListener('click', function(){
+    closeAppOverlay();
+    resetHeroDropzone();
+    styleCards.forEach(function(x){x.classList.remove('selected');});
+    selectedStyleName = null;
+    toStep3.disabled = true;
+    currentOrderId = null;
+    lastFullImage = null;
+    stopLoading();
+    orderReady = false;
+    orderFailed = false;
+    hideGeneratingState();
+    var resultImgWrap = document.querySelector('#resultFrame .result-img');
+    if(resultImgWrap){
+      if(originalResultImgHtml === null) originalResultImgHtml = resultImgWrap.innerHTML;
+      else resultImgWrap.innerHTML = originalResultImgHtml;
+    }
+    document.getElementById('resultFrame').classList.add('locked');
+    document.getElementById('resultFrame').classList.remove('unlocked');
+    document.getElementById('unlockBtn').style.display = 'inline-flex';
+    document.getElementById('downloadBtn').style.display = 'none';
+    goTo(1);
+    var heroEl = document.getElementById('hero');
+    if(heroEl) heroEl.scrollIntoView({behavior:'smooth'});
+  });
+
+  // ---- pagamento (Mercado Pago Checkout Pro) ----
+  var overlay = document.getElementById('modalOverlay');
+  var payForm = document.getElementById('modalPayForm');
+  var processing = document.getElementById('modalProcessing');
+  var success = document.getElementById('modalSuccess');
+
+  document.getElementById('unlockBtn').addEventListener('click', function(){
+    overlay.classList.add('open');
+    payForm.style.display = 'block';
+    processing.classList.remove('visible');
+    success.classList.remove('visible');
+  });
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) closeModal(); });
+  function closeModal(){ overlay.classList.remove('open'); }
+
+  document.getElementById('payBtn').addEventListener('click', function(){
+    if(!currentOrderId){
+      alert('Pedido não encontrado. Gere sua foto novamente.');
+      return;
+    }
+    payForm.style.display = 'none';
+    processing.classList.add('visible');
+    fetch('/api/orders/' + currentOrderId + '/pay', { method: 'POST' })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.initPoint){
+          window.location.href = data.initPoint;
+        } else {
+          throw new Error(data.error || 'Erro ao iniciar o pagamento.');
+        }
+      })
+      .catch(function(err){
+        processing.classList.remove('visible');
+        payForm.style.display = 'block';
+        alert('Não foi possível iniciar o pagamento: ' + err.message);
+      });
+  });
+
+  document.getElementById('modalDoneBtn').addEventListener('click', function(){
+    closeModal();
+  });
+
+  document.getElementById('downloadBtn').addEventListener('click', function(){
+    if(!lastFullImage) return;
+    var a = document.createElement('a');
+    a.href = lastFullImage;
+    a.download = 'photopro-foto-profissional.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  function revealPaidResult(){
+    var frame = document.getElementById('resultFrame');
+    frame.classList.remove('locked');
+    frame.classList.add('unlocked');
+    document.getElementById('lockChip').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg> Liberado';
+    document.getElementById('unlockBtn').style.display = 'none';
+    document.getElementById('downloadBtn').style.display = 'block';
+    var resultImgWrap = document.querySelector('#resultFrame .result-img');
+    if(resultImgWrap && lastFullImage){
+      resultImgWrap.innerHTML = '<img src="'+lastFullImage+'" alt="Sua foto profissional">';
+    }
+    closeModal();
+  }
+
+  // ---- loading pós-pagamento ----
+  // Só é exibido depois que o pagamento é confirmado. É neste momento que a
+  // geração real acontece no servidor (ver routes/webhooks.js), mas a tela
+  // aqui mostra apenas um status genérico de "processando pagamento" — o
+  // usuário não precisa (nem deve) saber que a IA está rodando agora.
+  var GENERATING_MESSAGES = ['Aguarde um instante...', 'Confirmando seu pagamento...', 'Estamos quase lá...'];
+  var generatingMsgTimer = null;
+  function showGeneratingState(){
+    var grid = document.querySelector('.result-grid');
+    if(grid) grid.style.display = 'none';
+    document.getElementById('generatingState').style.display = 'block';
+    var msgEl = document.getElementById('generatingMsg');
+    var i = 0;
+    msgEl.textContent = GENERATING_MESSAGES[0];
+    if(generatingMsgTimer) clearInterval(generatingMsgTimer);
+    generatingMsgTimer = setInterval(function(){
+      i = (i + 1) % GENERATING_MESSAGES.length;
+      msgEl.textContent = GENERATING_MESSAGES[i];
+    }, 1800);
+  }
+  function hideGeneratingState(){
+    if(generatingMsgTimer) clearInterval(generatingMsgTimer);
+    var grid = document.querySelector('.result-grid');
+    if(grid) grid.style.display = '';
+    var genEl = document.getElementById('generatingState');
+    if(genEl) genEl.style.display = 'none';
+  }
+
+  function pollUntilPaid(orderId){
+    var attempts = 0;
+    showGeneratingState();
+    if(paidPollInterval) clearInterval(paidPollInterval);
+    paidPollInterval = setInterval(function(){
+      attempts++;
+      fetch('/api/orders/' + orderId)
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if(data.status === 'paid' && data.fullImage){
+            clearInterval(paidPollInterval);
+            hideGeneratingState();
+            lastFullImage = data.fullImage;
+            revealPaidResult();
+          } else if(data.status === 'generation_failed'){
+            clearInterval(paidPollInterval);
+            hideGeneratingState();
+            alert(data.error || 'Seu pagamento foi aprovado, mas tivemos um problema ao gerar sua foto. Entre em contato pelo suporte informando o número do pedido: ' + orderId);
+          } else if(data.status === 'payment_rejected'){
+            clearInterval(paidPollInterval);
+            hideGeneratingState();
+            alert('Seu pagamento não foi aprovado. Você pode tentar novamente.');
+          } else if(attempts > 40){
+            clearInterval(paidPollInterval);
+            hideGeneratingState();
+            alert('A confirmação do pagamento está demorando mais que o esperado. Atualize a página em instantes.');
+          }
+          // status 'pending_payment' ou 'generating' -> continua aguardando
+        })
+        .catch(function(){ /* tenta de novo no próximo ciclo */ });
+    }, 2500);
+  }
+
+  // ---- volta do checkout do Mercado Pago (back_urls) ----
+  (function handlePaymentReturnFromUrl(){
+    var params = new URLSearchParams(window.location.search);
+    var orderId = params.get('order');
+    var paymentStatus = params.get('payment');
+    if(!orderId) return;
+
+    currentOrderId = orderId;
+    openAppOverlay();
+    goTo(4);
+
+    if(paymentStatus === 'success'){
+      pollUntilPaid(orderId);
+    } else if(paymentStatus === 'failure'){
+      alert('O pagamento não foi concluído. Você pode tentar novamente clicando em "Desbloquear em HD".');
+    } else if(paymentStatus === 'pending'){
+      alert('Seu pagamento está pendente de confirmação. Assim que for aprovado, sua foto será liberada automaticamente.');
+      pollUntilPaid(orderId);
+    }
+  })();
+})();
+
+// ---------- faq accordion ----------
+(function(){
+  document.querySelectorAll('.faq-item').forEach(function(item){
+    item.querySelector('.faq-q').addEventListener('click', function(){
+      var wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(function(i){ i.classList.remove('open'); });
+      if(!wasOpen) item.classList.add('open');
+    });
+  });
+})();
+</script>
+</body>
+</html>
