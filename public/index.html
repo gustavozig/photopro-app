@@ -529,7 +529,18 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 }
 .result-frame.unlocked .lock-chip{background:var(--green);color:#04140c;border-color:var(--green);}
 
-.price-card{background:var(--card-2);border:1px solid var(--border);border-radius:18px;padding:28px;}
+.price-card{background:var(--card-2);border:1px solid var(--border);border-radius:18px;padding:28px;position:relative;}
+.promo-timer{
+  position:absolute;top:14px;right:14px;
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(255,92,92,.12);border:1px solid rgba(255,92,92,.35);
+  color:#ff8a8a;font-size:11px;font-weight:800;letter-spacing:.02em;
+  padding:5px 10px;border-radius:999px;white-space:nowrap;
+}
+.promo-timer svg{width:12px;height:12px;flex-shrink:0;}
+@media (max-width:380px){
+  .promo-timer{position:static;display:inline-flex;margin-bottom:12px;}
+}
 .price-old{color:var(--muted-2);text-decoration:line-through;font-size:16px;}
 .price-row{display:flex;align-items:baseline;gap:10px;margin:6px 0 4px;flex-wrap:wrap;}
 .price-new{font-size:44px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;}
@@ -1072,6 +1083,10 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
             <div class="preview-pending-note">Preparando sua prévia real...</div>
           </div>
           <div class="price-card">
+            <div class="promo-timer" id="promoTimer">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <span id="promoTimerText">46:00</span>
+            </div>
             <div class="price-old">R$ 29,90</div>
             <div class="price-row">
               <span class="price-new">R$ 9,90</span>
@@ -1081,10 +1096,10 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
             <ul class="price-list">
               <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Download em alta resolução</li>
               <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Sem marca d'água</li>
-              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Sem cadastro de cartão para gerar o preview</li>
               <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Liberação imediata após o pagamento</li>
+              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Entrega imediata para quem paga com PIX</li>
             </ul>
-            <button class="btn btn-primary btn-block" id="unlockBtn">Desbloquear em HD — R$ 9,90</button>
+            <button class="btn btn-primary btn-block" id="unlockBtn">Desbloquear foto em HD</button>
             <button class="btn btn-ghost btn-block" id="downloadBtn" style="display:none;margin-top:10px;">Baixar imagem</button>
           </div>
         </div>
@@ -2155,6 +2170,50 @@ function fillLoopTrack(track, buildOneCopyHtml){
       pollUntilPaid(orderId);
     }
   })();
+})();
+
+// ---------- contador de urgência da promoção (46min) ----------
+// Persistido em localStorage pra não "reiniciar" toda vez que o usuário
+// atualiza a página — some deadline real, guardado como timestamp. Se o
+// prazo já tiver passado (usuário voltou depois de muito tempo), a gente
+// discretamente abre uma nova janela de 46min em vez de travar em "00:00".
+(function(){
+  var PROMO_DURATION_MS = 46 * 60 * 1000;
+  var STORAGE_KEY = 'photopro_promo_deadline';
+  var textEl = document.getElementById('promoTimerText');
+  if(!textEl) return;
+
+  function readDeadline(){
+    try{
+      var stored = localStorage.getItem(STORAGE_KEY);
+      var n = stored ? parseInt(stored, 10) : NaN;
+      return isNaN(n) ? null : n;
+    }catch(e){ return null; }
+  }
+  function writeDeadline(v){
+    try{ localStorage.setItem(STORAGE_KEY, String(v)); }catch(e){ /* localStorage indisponível, segue só em memória */ }
+  }
+
+  var deadline = readDeadline();
+  if(!deadline || deadline <= Date.now()){
+    deadline = Date.now() + PROMO_DURATION_MS;
+    writeDeadline(deadline);
+  }
+
+  function tick(){
+    var remaining = deadline - Date.now();
+    if(remaining <= 0){
+      deadline = Date.now() + PROMO_DURATION_MS;
+      writeDeadline(deadline);
+      remaining = PROMO_DURATION_MS;
+    }
+    var totalSeconds = Math.floor(remaining / 1000);
+    var mm = Math.floor(totalSeconds / 60);
+    var ss = totalSeconds % 60;
+    textEl.textContent = (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+  }
+  tick();
+  setInterval(tick, 1000);
 })();
 
 // ---------- faq accordion ----------
