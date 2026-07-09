@@ -8,11 +8,27 @@ Edit this selfie into a professional headshot photograph.
 CRITICAL — identity preservation (do not violate):
 - Keep the exact same person: same face shape, same eyes, same nose, same mouth,
   same skin tone, same hairstyle and hair color, same approximate age.
-- Do not beautify, slim, or reshape the face. Do not change ethnicity or gender presentation.
+- Do not beautify, slim, reshape, or idealize the face. Do not change ethnicity or gender
+  presentation. Do not enlarge the eyes, whiten the teeth beyond reality, or symmetrize
+  the face artificially.
+- Preserve natural skin texture — visible pores, subtle blemishes, natural texture — this
+  must look like a real unedited photograph of this exact person, not an idealized avatar.
 - The result must be immediately recognizable as the same individual in the original photo,
   just professionally dressed, lit, and framed.
-Technical requirements:
-- Head-and-shoulders composition, subject centered, looking at the camera, natural relaxed expression.
+Natural, realistic look (avoid the typical over-processed "AI portrait" look):
+- True-to-life, natural color grading: accurate, neutral skin tones. Do NOT oversaturate
+  colors, do NOT apply HDR/neon color grading, do NOT over-sharpen.
+- Skin must look natural and matte-to-slightly-natural-sheen, never waxy, plastic-looking,
+  or airbrushed smooth.
+- Avoid exaggerated contrast or crushed shadows — soft, realistic dynamic range like an
+  unedited DSLR portrait, not a heavily filtered social-media photo.
+Framing (must be consistent every time):
+- Head-and-shoulders composition: crop from roughly mid-chest up.
+- Face centered horizontally, eyes positioned around the upper third of the frame, face
+  occupying roughly 35-45% of the frame height — not an extreme close-up, not a distant/
+  full-body shot.
+- Both shoulders visible and level, camera at eye level, subject looking directly at the
+  camera with a natural, relaxed expression (no forced smile).
 - Sharp focus on the face, shallow depth of field on the background.
 - Photo-realistic, DSLR quality, no illustration/painting/CGI look, no text or watermark.
 `.trim();
