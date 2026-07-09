@@ -498,7 +498,49 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 /* result */
 .result-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:36px;align-items:center;}
 @media (max-width:860px){.result-grid{grid-template-columns:1fr;}}
-.result-frame{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#000;max-width:320px;margin:0 auto;}
+.result-frame{
+  position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#000;
+  max-width:320px;margin:0 auto;
+  box-shadow:0 24px 60px -20px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.04);
+}
+/* destaque suave na imagem: leve zoom de entrada + brilho pulsante contínuo —
+   ela é o principal gatilho emocional da etapa, então recebe mais atenção
+   visual que a caixa de pagamento. */
+@keyframes resultFrameEntrance{from{opacity:0;transform:scale(1.05);}to{opacity:1;transform:scale(1);}}
+@keyframes resultFrameGlow{
+  0%,100%{box-shadow:0 24px 60px -20px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.04), 0 0 0 rgba(47,227,139,0);}
+  50%{box-shadow:0 24px 60px -20px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.04), 0 0 44px -6px rgba(47,227,139,.35);}
+}
+.app-panel[data-panel="4"] .result-frame{
+  animation: resultFrameEntrance .6s ease both, resultFrameGlow 3.6s ease-in-out .6s infinite;
+}
+/* micro-animações em cascata: cada bloco da etapa de resultado aparece com
+   uma leve defasagem, pra dar sensação premium — como o painel inteiro vai
+   de display:none pra block a cada vez que a etapa 4 é exibida, essas
+   animações reiniciam sozinhas, sem precisar de JS. */
+@keyframes fadeUpIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.app-panel[data-panel="4"] .price-card-title,
+.app-panel[data-panel="4"] .price-card-subtitle{
+  animation: fadeUpIn .5s ease both; animation-delay:.08s;
+}
+.app-panel[data-panel="4"] .promo-timer-wrap{
+  animation: fadeUpIn .5s ease both; animation-delay:.04s;
+}
+.app-panel[data-panel="4"] .price-offer-label,
+.app-panel[data-panel="4"] .price-old,
+.app-panel[data-panel="4"] .price-row,
+.app-panel[data-panel="4"] .price-fine-print{
+  animation: fadeUpIn .5s ease both; animation-delay:.16s;
+}
+.app-panel[data-panel="4"] .price-list{
+  animation: fadeUpIn .5s ease both; animation-delay:.26s;
+}
+.app-panel[data-panel="4"] #unlockBtn{
+  animation: fadeUpIn .5s ease both; animation-delay:.36s;
+}
+.app-panel[data-panel="4"] .price-trust-note{
+  animation: fadeUpIn .5s ease both; animation-delay:.44s;
+}
 .result-frame img, .result-frame svg{width:100%;display:block;}
 .result-frame.locked .result-img{filter:blur(14px) saturate(0.8);}
 .result-frame.locked.has-real-preview .result-img{filter:none;}
@@ -530,8 +572,15 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .result-frame.unlocked .lock-chip{background:var(--green);color:#04140c;border-color:var(--green);}
 
 .price-card{background:var(--card-2);border:1px solid var(--border);border-radius:18px;padding:28px;position:relative;}
-.promo-timer{
+.promo-timer-wrap{
   position:absolute;top:14px;right:14px;
+  display:flex;flex-direction:column;align-items:flex-end;gap:4px;
+}
+.promo-timer-label{
+  font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--muted-2);
+}
+.promo-timer{
   display:inline-flex;align-items:center;gap:5px;
   background:rgba(255,92,92,.12);border:1px solid rgba(255,92,92,.35);
   color:#ff8a8a;font-size:11px;font-weight:800;letter-spacing:.02em;
@@ -539,7 +588,27 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 }
 .promo-timer svg{width:12px;height:12px;flex-shrink:0;}
 @media (max-width:380px){
-  .promo-timer{position:static;display:inline-flex;margin-bottom:12px;}
+  .promo-timer-wrap{position:static;align-items:flex-start;margin-bottom:14px;}
+}
+.price-card-title{
+  font-size:16.5px;font-weight:800;line-height:1.35;margin:0 0 5px;
+  padding-right:104px;letter-spacing:-.01em;
+}
+.price-card-subtitle{
+  font-size:12.5px;color:var(--muted);margin:0 0 18px;line-height:1.5;
+  padding-right:104px;
+}
+@media (max-width:380px){
+  .price-card-title, .price-card-subtitle{padding-right:0;}
+}
+.price-offer-label{
+  font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--green);margin:0 0 4px;
+}
+.price-fine-print{color:var(--muted);font-size:13px;margin:10px 0 6px;}
+.price-trust-note{
+  font-size:11px;color:var(--muted-2);text-align:center;margin:14px 0 0;
+  display:flex;align-items:center;justify-content:center;gap:6px;line-height:1.4;
 }
 .price-old{color:var(--muted-2);text-decoration:line-through;font-size:16px;}
 .price-row{display:flex;align-items:baseline;gap:10px;margin:6px 0 4px;flex-wrap:wrap;}
@@ -1083,23 +1152,30 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
             <div class="preview-pending-note">Preparando sua prévia real...</div>
           </div>
           <div class="price-card">
-            <div class="promo-timer" id="promoTimer">
-              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <span id="promoTimerText">46:00</span>
+            <div class="promo-timer-wrap">
+              <span class="promo-timer-label">Oferta expira em</span>
+              <div class="promo-timer" id="promoTimer">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <span id="promoTimerText">46:00</span>
+              </div>
             </div>
+            <h3 class="price-card-title">Sua nova foto profissional está pronta para ser gerada.</h3>
+            <p class="price-card-subtitle">Falta apenas um passo para receber sua versão profissional em alta qualidade.</p>
+            <div class="price-offer-label">Oferta de lançamento</div>
             <div class="price-old">R$ 29,90</div>
             <div class="price-row">
               <span class="price-new">R$ 9,90</span>
               <span class="price-tag">67% OFF</span>
             </div>
-            <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Pagamento único — sem assinatura, sem cobrança recorrente.</p>
+            <p class="price-fine-print">Pagamento único. Sem assinatura. Sem cobranças recorrentes.</p>
             <ul class="price-list">
-              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Download em alta resolução</li>
+              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Receba sua nova foto profissional em alta resolução</li>
+              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Preserva sua identidade</li>
               <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Sem marca d'água</li>
-              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Liberação imediata após o pagamento</li>
-              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Entrega imediata para quem paga com PIX</li>
+              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Download imediato após o pagamento</li>
             </ul>
-            <button class="btn btn-primary btn-block" id="unlockBtn">Desbloquear foto em HD</button>
+            <button class="btn btn-primary btn-block" id="unlockBtn">Desbloquear Minha Foto Agora</button>
+            <p class="price-trust-note">🔒 Sua imagem só será utilizada para gerar sua foto profissional.</p>
             <button class="btn btn-ghost btn-block" id="downloadBtn" style="display:none;margin-top:10px;">Baixar imagem</button>
           </div>
         </div>
