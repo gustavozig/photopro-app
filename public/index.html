@@ -651,9 +651,42 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .modal-success.visible{display:block;}
 .modal-success .check-circle{width:64px;height:64px;border-radius:50%;background:var(--green-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--green);}
 
-/* embedded checkout (Payment Brick) + Pix */
-#paymentBrickContainer{margin-bottom:6px;}
-#paymentBrickContainer:empty{min-height:0;}
+/* checkout customizado (Checkout Transparente da MP: cartão + Pix), 100% no
+   design do site — só os campos de número/validade/CVV do cartão são
+   iframes seguros da MP (exigência de PCI), todo o resto é HTML nosso. */
+.pm-tabs{display:flex;gap:8px;margin-bottom:16px;}
+.pm-tab{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 10px;border-radius:12px;border:1px solid var(--border);
+  background:var(--card-2);color:var(--muted);font-size:13.5px;font-weight:700;
+  cursor:pointer;transition:border-color .15s,color .15s,background .15s;position:relative;
+}
+.pm-tab svg{width:16px;height:16px;flex-shrink:0;}
+.pm-tab.active{border-color:var(--green);color:var(--text);background:var(--green-soft);}
+.pm-tab-badge{
+  position:absolute;top:-8px;right:10px;background:var(--green);color:#04140c;
+  font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px;letter-spacing:.02em;
+}
+.cf-field{margin-bottom:12px;}
+.cf-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;}
+.cf-field input{
+  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;color:var(--text);font-size:14px;font-family:inherit;box-sizing:border-box;
+}
+.cf-field input:focus{outline:none;border-color:var(--green);}
+.cf-field-row{display:flex;gap:10px;}
+.cf-field-row .cf-field{flex:1;}
+.cf-secure-field{
+  background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;box-sizing:border-box;transition:border-color .15s;
+}
+.cf-secure-field.cf-focused{border-color:var(--green);}
+.cf-error{color:#ff8a8a;font-size:12.5px;margin:4px 0 12px;text-align:center;}
+.cf-secure-note{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:11px;color:var(--muted-2);margin:14px 0 0;
+}
+.cf-secure-note svg{width:12px;height:12px;flex-shrink:0;}
 .pix-box{background:var(--card-2);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;margin-bottom:14px;}
 .pix-qr-img{width:170px;height:170px;margin:0 auto 12px;display:block;border-radius:10px;background:#fff;padding:8px;}
 .pix-hint{font-size:12.5px;color:var(--muted);margin:0 0 12px;}
@@ -1207,19 +1240,87 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
         <strong>R$ 9,90</strong>
       </div>
 
-      <!-- Checkout embutido (Payment Brick do Mercado Pago) — cartão e Pix sem sair do site -->
-      <div id="paymentBrickContainer"></div>
+      <!-- Checkout customizado (Checkout Transparente da MP) — 100% no design
+           do site. Só os 3 campos do cartão (número/validade/CVV) são
+           iframes seguros da própria MP, por exigência de PCI; todo o resto
+           é HTML nosso. -->
+      <div class="pm-tabs" id="pmTabs">
+        <button type="button" class="pm-tab active" id="pmTabPix">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9.5 3.5L3.5 9.5C2.5 10.5 2.5 12 3.5 13L9.5 19C10.5 20 12 20 13 19L19 13C20 12 20 10.5 19 9.5L13 3.5C12 2.5 10.5 2.5 9.5 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 11L10.8 8.7C11.2 8.3 11.9 8.3 12.3 8.7L13.5 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15.5 13L13.2 15.3C12.8 15.7 12.1 15.7 11.7 15.3L10.5 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Pix
+          <span class="pm-tab-badge">Instantâneo</span>
+        </button>
+        <button type="button" class="pm-tab" id="pmTabCard">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M3 10H21" stroke="currentColor" stroke-width="1.8"/></svg>
+          Cartão
+        </button>
+      </div>
 
-      <!-- Bloco do Pix: QR code + copia-e-cola, exibido após o cliente escolher Pix no Brick -->
-      <div class="pix-box" id="pixBox" style="display:none;">
-        <img class="pix-qr-img" id="pixQrImg" alt="QR Code Pix">
-        <p class="pix-hint">Escaneie o QR Code com o app do seu banco, ou copie o código abaixo:</p>
-        <div class="pix-copy-row">
-          <input type="text" class="pix-copy-input" id="pixCopyInput" readonly>
-          <button type="button" class="btn btn-ghost" id="pixCopyBtn">Copiar</button>
+      <!-- PIX -->
+      <div class="pm-pane" id="pmPanePix">
+        <div id="pixFormFields">
+          <div class="cf-field">
+            <label for="pixName">Nome completo</label>
+            <input type="text" id="pixName" placeholder="Como está no documento" autocomplete="name">
+          </div>
+          <div class="cf-field">
+            <label for="pixCpf">CPF</label>
+            <input type="text" id="pixCpf" placeholder="000.000.000-00" inputmode="numeric" autocomplete="off" maxlength="14">
+          </div>
+          <div class="cf-field">
+            <label for="pixEmail">E-mail</label>
+            <input type="email" id="pixEmail" placeholder="seu@email.com" autocomplete="email">
+          </div>
+          <button type="button" class="btn btn-primary btn-block" id="pixSubmitBtn">Gerar QR Code Pix</button>
         </div>
-        <p class="pix-status" id="pixStatus">
-          <span class="live-dot-sm"></span> Aguardando confirmação do pagamento…
+
+        <!-- Resultado do Pix, exibido depois que o QR é gerado -->
+        <div class="pix-box" id="pixBox" style="display:none;">
+          <img class="pix-qr-img" id="pixQrImg" alt="QR Code Pix">
+          <p class="pix-hint">Escaneie o QR Code com o app do seu banco, ou copie o código abaixo:</p>
+          <div class="pix-copy-row">
+            <input type="text" class="pix-copy-input" id="pixCopyInput" readonly>
+            <button type="button" class="btn btn-ghost" id="pixCopyBtn">Copiar</button>
+          </div>
+          <p class="pix-status" id="pixStatus">
+            <span class="live-dot-sm"></span> Aguardando confirmação do pagamento…
+          </p>
+        </div>
+      </div>
+
+      <!-- CARTÃO -->
+      <div class="pm-pane" id="pmPaneCard" style="display:none;">
+        <div class="cf-field">
+          <label>Número do cartão</label>
+          <div class="cf-secure-field" id="cfCardNumber"></div>
+        </div>
+        <div class="cf-field-row">
+          <div class="cf-field">
+            <label>Validade</label>
+            <div class="cf-secure-field" id="cfExpiry"></div>
+          </div>
+          <div class="cf-field">
+            <label>CVV</label>
+            <div class="cf-secure-field" id="cfCvv"></div>
+          </div>
+        </div>
+        <div class="cf-field">
+          <label for="cardName">Nome no cartão</label>
+          <input type="text" id="cardName" placeholder="Como está impresso no cartão" autocomplete="cc-name">
+        </div>
+        <div class="cf-field">
+          <label for="cardCpf">CPF do titular</label>
+          <input type="text" id="cardCpf" placeholder="000.000.000-00" inputmode="numeric" autocomplete="off" maxlength="14">
+        </div>
+        <div class="cf-field">
+          <label for="cardEmail">E-mail</label>
+          <input type="email" id="cardEmail" placeholder="seu@email.com" autocomplete="email">
+        </div>
+        <p class="cf-error" id="cfError" style="display:none;"></p>
+        <button type="button" class="btn btn-primary btn-block" id="cardSubmitBtn">Pagar R$ 9,90</button>
+        <p class="cf-secure-note">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="currentColor" stroke-width="1.8"/></svg>
+          Dados do cartão criptografados pelo Mercado Pago
         </p>
       </div>
 
@@ -1966,17 +2067,27 @@ function fillLoopTrack(track, buildOneCopyHtml){
   });
 
   // ---- pagamento ----
-  // Fluxo principal: checkout embutido (Payment Brick do Mercado Pago —
-  // cartão e Pix, sem sair do site). Se a chave pública ainda não estiver
-  // configurada em produção (MP_PUBLIC_KEY), cai automaticamente no fluxo
-  // antigo (Checkout Pro, com redirect) — ver GET /api/config no backend.
+  // Checkout Transparente da Mercado Pago (Checkout API via Core Methods):
+  // o formulário inteiro (Pix e cartão) é HTML/CSS nosso, no design do
+  // site — só os 3 campos do cartão (número, validade, CVV) são iframes
+  // seguros da MP, exigência de PCI. Isso substitui o Payment Brick, que
+  // mesmo temeado ainda era um componente renderizado pela MP. Se a chave
+  // pública ainda não estiver configurada em produção (MP_PUBLIC_KEY), cai
+  // automaticamente no fluxo antigo (Checkout Pro, com redirect) — ver
+  // GET /api/config no backend.
   var overlay = document.getElementById('modalOverlay');
   var payForm = document.getElementById('modalPayForm');
   var processing = document.getElementById('modalProcessing');
   var processingText = document.getElementById('modalProcessingText');
   var success = document.getElementById('modalSuccess');
-  var brickContainer = document.getElementById('paymentBrickContainer');
+  var pmTabsEl = document.getElementById('pmTabs');
+  var pmTabPix = document.getElementById('pmTabPix');
+  var pmTabCard = document.getElementById('pmTabCard');
+  var pmPanePix = document.getElementById('pmPanePix');
+  var pmPaneCard = document.getElementById('pmPaneCard');
+  var pixFormFields = document.getElementById('pixFormFields');
   var pixBox = document.getElementById('pixBox');
+  var cfError = document.getElementById('cfError');
   var payBtnFallback = document.getElementById('payBtn');
 
   var mpConfigPromise = null;
@@ -1988,97 +2099,141 @@ function fillLoopTrack(track, buildOneCopyHtml){
   }
 
   var mpInstance = null;
-  var brickController = null;
+  var cardFieldsMounted = false;
+  var detectedPaymentMethodId = null;
+  var detectedIssuerId = null;
+
+  function onlyDigits(s){ return (s || '').replace(/\D/g, ''); }
+
+  // formata CPF em tempo real (000.000.000-00) nos dois formulários
+  function attachCpfMask(el){
+    if(!el) return;
+    el.addEventListener('input', function(){
+      var v = onlyDigits(el.value).slice(0, 11);
+      if(v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+      else if(v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+      else if(v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+      el.value = v;
+    });
+  }
+  attachCpfMask(document.getElementById('pixCpf'));
+  attachCpfMask(document.getElementById('cardCpf'));
+
+  function splitName(fullName){
+    var parts = fullName.trim().split(/\s+/);
+    var firstName = parts.shift();
+    var lastName = parts.join(' ') || firstName;
+    return { firstName: firstName, lastName: lastName };
+  }
+
+  function showCfError(msg){
+    cfError.textContent = msg;
+    cfError.style.display = 'block';
+  }
+  function clearCfError(){ cfError.style.display = 'none'; }
+
+  function switchPaymentTab(method){
+    var isPix = method === 'pix';
+    pmTabPix.classList.toggle('active', isPix);
+    pmTabCard.classList.toggle('active', !isPix);
+    pmPanePix.style.display = isPix ? 'block' : 'none';
+    pmPaneCard.style.display = isPix ? 'none' : 'block';
+    clearCfError();
+  }
+  pmTabPix.addEventListener('click', function(){ switchPaymentTab('pix'); });
+  pmTabCard.addEventListener('click', function(){ switchPaymentTab('card'); });
 
   function resetPaymentModalUI(){
     payForm.style.display = 'block';
     processing.classList.remove('visible');
     success.classList.remove('visible');
+    pmTabsEl.style.display = 'flex';
+    pixFormFields.style.display = 'block';
     pixBox.style.display = 'none';
-    brickContainer.style.display = 'block';
     payBtnFallback.style.display = 'none';
     processingText.textContent = 'Confirmando seu pagamento…';
+    clearCfError();
+    switchPaymentTab('pix');
+    ['pixName','pixCpf','pixEmail','cardName','cardCpf','cardEmail'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    var pixBtn = document.getElementById('pixSubmitBtn');
+    pixBtn.disabled = false; pixBtn.textContent = 'Gerar QR Code Pix';
+    var cardBtn = document.getElementById('cardSubmitBtn');
+    cardBtn.disabled = false; cardBtn.textContent = 'Pagar R$ 9,90';
   }
 
   function mountFallbackButton(){
-    brickContainer.style.display = 'none';
+    pmTabsEl.style.display = 'none';
+    pmPanePix.style.display = 'none';
+    pmPaneCard.style.display = 'none';
     payBtnFallback.style.display = 'inline-flex';
   }
 
-  function mountPaymentBrick(publicKey, amount){
-    brickContainer.innerHTML = '';
+  // Monta os 3 campos seguros do cartão (número, validade, CVV) uma única
+  // vez por sessão — eles ficam prontos em segundo plano assim que o modal
+  // abre, pra não ter atraso quando o cliente clicar na aba "Cartão".
+  function mountCardFields(publicKey){
+    if(cardFieldsMounted) return;
     if(!window.MercadoPago){ mountFallbackButton(); return; }
     try{
       if(!mpInstance) mpInstance = new MercadoPago(publicKey, { locale: 'pt-BR' });
-      var bricksBuilder = mpInstance.bricks();
-      bricksBuilder.create('payment', 'paymentBrickContainer', {
-        initialization: { amount: amount },
-        customization: {
-          paymentMethods: { creditCard: 'all', debitCard: 'all', bankTransfer: 'all', maxInstallments: 1 },
-          // Tema oficial do Brick pra casar com a identidade visual do site
-          // (fundo escuro, verde de destaque) em vez do branco padrão da MP —
-          // reduz o "salto" visual pro cliente na hora de pagar, que é
-          // exatamente o ponto de maior atrito/abandono do funil.
-          visual: {
-            hideFormTitle: true,
-            style: {
-              theme: 'dark',
-              customVariables: {
-                formBackgroundColor: '#1c1c1f',
-                baseColor: '#2fe38b',
-                baseColorFirstVariant: '#17c96b',
-                baseColorSecondVariant: '#2fe38b',
-                textPrimaryColor: '#f5f5f6',
-                textSecondaryColor: '#9a9aa2',
-                inputBackgroundColor: '#0a0a0b',
-                outlinePrimaryColor: '#2fe38b',
-                outlineSecondaryColor: '#28282c',
-                buttonTextColor: '#04140c',
-                errorColor: '#ff5c5c',
-                successColor: '#2fe38b',
-                borderRadiusSmall: '10px',
-                borderRadiusMedium: '14px',
-                borderRadiusLarge: '18px',
-                borderRadiusFull: '999px',
-                formPadding: '0px'
-              }
-            }
+      var fieldStyle = {
+        color: '#f5f5f6',
+        fontSize: '14px',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+        placeholderColor: '#6f6f77'
+      };
+      var cardNumberElement = mpInstance.fields.create('cardNumber', {
+        placeholder: '0000 0000 0000 0000', style: fieldStyle
+      }).mount('cfCardNumber');
+      var expirationDateElement = mpInstance.fields.create('expirationDate', {
+        placeholder: 'MM/AA', style: fieldStyle
+      }).mount('cfExpiry');
+      var securityCodeElement = mpInstance.fields.create('securityCode', {
+        placeholder: 'CVV', style: fieldStyle
+      }).mount('cfCvv');
+
+      // realce visual (borda verde) no wrapper quando o campo seguro está
+      // focado — como o input real está dentro do iframe da MP, o foco é
+      // reportado via evento, não dá pra usar :focus do CSS puro.
+      [
+        [cardNumberElement, 'cfCardNumber'],
+        [expirationDateElement, 'cfExpiry'],
+        [securityCodeElement, 'cfCvv']
+      ].forEach(function(pair){
+        var el = pair[0], wrapId = pair[1];
+        var wrap = document.getElementById(wrapId);
+        el.on('focus', function(){ wrap.classList.add('cf-focused'); });
+        el.on('blur', function(){ wrap.classList.remove('cf-focused'); });
+      });
+
+      var currentBin = null;
+      cardNumberElement.on('binChange', function(data){
+        var bin = data && data.bin;
+        if(!bin){ detectedPaymentMethodId = null; detectedIssuerId = null; return; }
+        if(bin === currentBin) return;
+        currentBin = bin;
+        mpInstance.getPaymentMethods({ bin: bin }).then(function(res){
+          var pm = res && res.results && res.results[0];
+          if(!pm) return;
+          detectedPaymentMethodId = pm.id;
+          if(pm.settings && pm.settings[0]){
+            cardNumberElement.update({ settings: pm.settings[0].card_number });
+            securityCodeElement.update({ settings: pm.settings[0].security_code });
           }
-        },
-        callbacks: {
-          onReady: function(){},
-          onError: function(){ mountFallbackButton(); },
-          onSubmit: function(data){
-            var formData = data.formData;
-            return new Promise(function(resolve, reject){
-              if(!currentOrderId){
-                alert('Pedido não encontrado. Gere sua foto novamente.');
-                reject();
-                return;
-              }
-              fetch('/api/orders/' + currentOrderId + '/payments', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-              })
-                .then(function(r){ return r.json().then(function(body){ return { ok: r.ok, body: body }; }); })
-                .then(function(res){
-                  if(!res.ok || res.body.error){
-                    alert('Não foi possível processar o pagamento: ' + (res.body.error || 'tente novamente.'));
-                    reject();
-                    return;
-                  }
-                  handleDirectPaymentResult(res.body);
-                  resolve();
-                })
-                .catch(function(){
-                  alert('Não foi possível processar o pagamento. Verifique sua conexão e tente novamente.');
-                  reject();
-                });
-            });
+          if(pm.additional_info_needed && pm.additional_info_needed.indexOf('issuer_id') > -1){
+            mpInstance.getIssuers({ paymentMethodId: pm.id, bin: bin }).then(function(issuers){
+              detectedIssuerId = issuers && issuers[0] && issuers[0].id;
+            }).catch(function(){ detectedIssuerId = null; });
+          } else {
+            detectedIssuerId = pm.issuer && pm.issuer.id;
           }
-        }
-      }).then(function(controller){ brickController = controller; });
+        }).catch(function(){});
+      });
+
+      cardFieldsMounted = true;
     } catch(e){
       mountFallbackButton();
     }
@@ -2086,7 +2241,8 @@ function fillLoopTrack(track, buildOneCopyHtml){
 
   function handleDirectPaymentResult(result){
     if(result.pix){
-      brickContainer.style.display = 'none';
+      pmTabsEl.style.display = 'none';
+      pixFormFields.style.display = 'none';
       pixBox.style.display = 'block';
       document.getElementById('pixQrImg').src = 'data:image/png;base64,' + result.pix.qrCodeBase64;
       document.getElementById('pixCopyInput').value = result.pix.qrCode;
@@ -2094,7 +2250,9 @@ function fillLoopTrack(track, buildOneCopyHtml){
       return;
     }
     if(result.status === 'rejected'){
-      alert('Pagamento recusado. Tente novamente com outro cartão ou escolha Pix.');
+      showCfError('Pagamento recusado. Tente novamente com outro cartão ou escolha Pix.');
+      var cardBtn = document.getElementById('cardSubmitBtn');
+      cardBtn.disabled = false; cardBtn.textContent = 'Pagar R$ 9,90';
       return;
     }
     // 'approved', 'in_process' ou 'pending' (cartão em análise): mostra
@@ -2109,7 +2267,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     resetPaymentModalUI();
     getMpConfig().then(function(cfg){
       if(cfg && cfg.mpPublicKey){
-        mountPaymentBrick(cfg.mpPublicKey, cfg.priceBRL || 9.9);
+        mountCardFields(cfg.mpPublicKey);
       } else {
         mountFallbackButton();
       }
@@ -2119,7 +2277,122 @@ function fillLoopTrack(track, buildOneCopyHtml){
   overlay.addEventListener('click', function(e){ if(e.target === overlay) closeModal(); });
   function closeModal(){ overlay.classList.remove('open'); }
 
-  // ---- fallback: Checkout Pro (redirect) — só usado se o Brick não montar ----
+  // ---- Pix: gerar QR code ----
+  document.getElementById('pixSubmitBtn').addEventListener('click', function(){
+    clearCfError();
+    if(!currentOrderId){
+      alert('Pedido não encontrado. Gere sua foto novamente.');
+      return;
+    }
+    var name = document.getElementById('pixName').value.trim();
+    var cpf = onlyDigits(document.getElementById('pixCpf').value);
+    var email = document.getElementById('pixEmail').value.trim();
+    if(!name || cpf.length !== 11 || !email){
+      alert('Preencha nome, CPF e e-mail válidos para gerar o Pix.');
+      return;
+    }
+    var n = splitName(name);
+    var btn = document.getElementById('pixSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Gerando QR Code...';
+
+    fetch('/api/orders/' + currentOrderId + '/payments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        payment_method_id: 'pix',
+        payer: {
+          email: email,
+          first_name: n.firstName,
+          last_name: n.lastName,
+          identification: { type: 'CPF', number: cpf }
+        }
+      })
+    })
+      .then(function(r){ return r.json().then(function(body){ return { ok: r.ok, body: body }; }); })
+      .then(function(res){
+        btn.disabled = false;
+        btn.textContent = 'Gerar QR Code Pix';
+        if(!res.ok || res.body.error){
+          alert('Não foi possível gerar o Pix: ' + (res.body.error || 'tente novamente.'));
+          return;
+        }
+        handleDirectPaymentResult(res.body);
+      })
+      .catch(function(){
+        btn.disabled = false;
+        btn.textContent = 'Gerar QR Code Pix';
+        alert('Não foi possível gerar o Pix. Verifique sua conexão e tente novamente.');
+      });
+  });
+
+  // ---- Cartão: tokenizar e pagar ----
+  document.getElementById('cardSubmitBtn').addEventListener('click', function(){
+    clearCfError();
+    if(!currentOrderId){
+      alert('Pedido não encontrado. Gere sua foto novamente.');
+      return;
+    }
+    if(!mpInstance || !cardFieldsMounted){
+      showCfError('Aguarde o formulário carregar e tente novamente.');
+      return;
+    }
+    var name = document.getElementById('cardName').value.trim();
+    var cpf = onlyDigits(document.getElementById('cardCpf').value);
+    var email = document.getElementById('cardEmail').value.trim();
+    if(!name || cpf.length !== 11 || !email){
+      showCfError('Preencha nome, CPF e e-mail válidos.');
+      return;
+    }
+    if(!detectedPaymentMethodId){
+      showCfError('Confira o número do cartão digitado.');
+      return;
+    }
+
+    var btn = document.getElementById('cardSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Processando...';
+
+    mpInstance.fields.createCardToken({
+      cardholderName: name,
+      identificationType: 'CPF',
+      identificationNumber: cpf
+    }).then(function(token){
+      var n = splitName(name);
+      var payload = {
+        token: token.id,
+        payment_method_id: detectedPaymentMethodId,
+        installments: 1,
+        payer: {
+          email: email,
+          first_name: n.firstName,
+          last_name: n.lastName,
+          identification: { type: 'CPF', number: cpf }
+        }
+      };
+      if(detectedIssuerId) payload.issuer_id = detectedIssuerId;
+
+      return fetch('/api/orders/' + currentOrderId + '/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function(r){ return r.json().then(function(body){ return { ok: r.ok, body: body }; }); });
+    }).then(function(res){
+      btn.disabled = false;
+      btn.textContent = 'Pagar R$ 9,90';
+      if(!res.ok || res.body.error){
+        showCfError(res.body.error || 'Não foi possível processar o pagamento. Tente novamente.');
+        return;
+      }
+      handleDirectPaymentResult(res.body);
+    }).catch(function(){
+      btn.disabled = false;
+      btn.textContent = 'Pagar R$ 9,90';
+      showCfError('Não foi possível processar o cartão. Confira os dados e tente novamente.');
+    });
+  });
+
+  // ---- fallback: Checkout Pro (redirect) — só usado se o checkout embutido não montar ----
   payBtnFallback.addEventListener('click', function(){
     if(!currentOrderId){
       alert('Pedido não encontrado. Gere sua foto novamente.');
