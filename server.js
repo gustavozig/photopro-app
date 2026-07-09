@@ -5,6 +5,7 @@ const path = require('path');
 const cors = require('cors');
 
 const orderStore = require('./services/orderStore');
+const mercadoPagoService = require('./services/mercadoPagoService');
 const ordersRouter = require('./routes/orders');
 const webhooksRouter = require('./routes/webhooks');
 
@@ -17,6 +18,20 @@ app.set('publicUrl', PUBLIC_URL);
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ---------------------------------------------------------------------------
+// Config pública para o front-end montar o checkout embutido (Payment
+// Brick). MP_PUBLIC_KEY é, por definição, segura para expor no cliente —
+// é diferente do MP_ACCESS_TOKEN (esse sim secreto, nunca sai do servidor).
+// Se MP_PUBLIC_KEY não estiver configurada ainda, o front-end cai
+// automaticamente no fluxo antigo (Checkout Pro com redirect).
+// ---------------------------------------------------------------------------
+app.get('/api/config', (req, res) => {
+  res.json({
+    mpPublicKey: process.env.MP_PUBLIC_KEY || null,
+    priceBRL: mercadoPagoService.PRICE_BRL,
+  });
+});
 
 app.use('/api', ordersRouter);
 app.use('/api', webhooksRouter);
