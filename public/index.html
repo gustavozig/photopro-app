@@ -2046,7 +2046,36 @@ function fillLoopTrack(track, buildOneCopyHtml){
       bricksBuilder.create('payment', 'paymentBrickContainer', {
         initialization: { amount: amount },
         customization: {
-          paymentMethods: { creditCard: 'all', debitCard: 'all', bankTransfer: 'all', maxInstallments: 1 }
+          paymentMethods: { creditCard: 'all', debitCard: 'all', bankTransfer: 'all', maxInstallments: 1 },
+          // Tema oficial do Brick pra casar com a identidade visual do site
+          // (fundo escuro, verde de destaque) em vez do branco padrão da MP —
+          // reduz o "salto" visual pro cliente na hora de pagar, que é
+          // exatamente o ponto de maior atrito/abandono do funil.
+          visual: {
+            hideFormTitle: true,
+            style: {
+              theme: 'dark',
+              customVariables: {
+                formBackgroundColor: '#1c1c1f',
+                baseColor: '#2fe38b',
+                baseColorFirstVariant: '#17c96b',
+                baseColorSecondVariant: '#2fe38b',
+                textPrimaryColor: '#f5f5f6',
+                textSecondaryColor: '#9a9aa2',
+                inputBackgroundColor: '#0a0a0b',
+                outlinePrimaryColor: '#2fe38b',
+                outlineSecondaryColor: '#28282c',
+                buttonTextColor: '#04140c',
+                errorColor: '#ff5c5c',
+                successColor: '#2fe38b',
+                borderRadiusSmall: '10px',
+                borderRadiusMedium: '14px',
+                borderRadiusLarge: '18px',
+                borderRadiusFull: '999px',
+                formPadding: '0px'
+              }
+            }
+          }
         },
         callbacks: {
           onReady: function(){},
