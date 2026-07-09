@@ -685,10 +685,10 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .cf-secure-field.cf-focused{border-color:var(--green);}
 .cf-error{color:#ff8a8a;font-size:12.5px;margin:4px 0 12px;text-align:center;}
 .cf-secure-note{
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  font-size:11px;color:var(--muted-2);margin:14px 0 0;
+  display:flex;align-items:flex-start;justify-content:center;gap:6px;
+  font-size:11px;color:var(--muted-2);margin:14px 0 0;line-height:1.5;text-align:center;
 }
-.cf-secure-note svg{width:12px;height:12px;flex-shrink:0;}
+.cf-secure-note svg{width:13px;height:13px;flex-shrink:0;margin-top:1px;}
 .pix-box{background:var(--card-2);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;margin-bottom:14px;}
 .pix-qr-img{width:170px;height:170px;margin:0 auto 12px;display:block;border-radius:10px;background:#fff;padding:8px;}
 .pix-hint{font-size:12.5px;color:var(--muted);margin:0 0 12px;}
@@ -1274,6 +1274,10 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
             <input type="email" id="pixEmail" placeholder="seu@email.com" autocomplete="email">
           </div>
           <button type="button" class="btn btn-primary btn-block" id="pixSubmitBtn">Gerar QR Code Pix</button>
+          <p class="cf-secure-note">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg>
+            Seu banco vai mostrar o nome do responsável pela PhotoPRO ao confirmar o Pix — é assim que todo Pix funciona, por segurança.
+          </p>
         </div>
 
         <!-- Resultado do Pix, exibido depois que o QR é gerado -->
