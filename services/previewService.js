@@ -17,56 +17,28 @@ const PREVIEW_WIDTH = 480; // reduz banda, custo e detalhe — só o suficiente 
 const BLUR_SIGMA = 12; // blur mais leve que a versão anterior, mas ainda esconde detalhes do rosto
 
 // ---------------------------------------------------------------------------
-// A marca d'água é desenhada como SVG e "rasterizada" pelo sharp (libvips ->
-// librsvg) direto no servidor. O texto sumiu em produção na primeira versão
-// porque usávamos font-family:"Arial" — fonte que praticamente não existe em
-// containers Linux (Railway/Docker não vêm com Arial instalada), então só o
-// retângulo (forma vetorial, não depende de fonte) aparecia. A correção é
-// EMBUTIR a fonte direto no SVG via @font-face + base64 (arquivo em
-// services/fonts/roboto-bold.woff2) — assim o texto renderiza igual em
-// qualquer ambiente, sem depender de nenhuma fonte já instalada no sistema.
+// A marca d'água NÃO é mais desenhada como texto SVG em tempo de requisição.
+// Isso foi tentado antes (com @font-face embutido em base64 no próprio SVG)
+// e funcionava nos testes locais, mas em produção (Railway) o texto saía
+// como uma fileira de retângulos/"tofu boxes" (glifo de fallback) — a versão
+// do librsvg empacotada com o sharp ali não aplicava a fonte embutida do
+// jeito esperado, mesmo com o .woff2 correto.
+//
+// Solução mais simples e à prova de ambiente: a palavra "PREVIEW" é
+// pré-renderizada UMA VEZ (aqui neste repo, como um PNG transparente já
+// pronto — services/assets/watermark-preview.png) e, em tempo de
+// requisição, o servidor só usa o sharp pra redimensionar e posicionar essa
+// imagem estática sobre a prévia. Nenhuma fonte precisa ser carregada ou
+// interpretada em produção — só operações de imagem (resize/composite), que
+// não dependem de fontconfig nem de nenhuma fonte instalada no container.
 // ---------------------------------------------------------------------------
-const FONT_PATH = path.join(__dirname, 'fonts', 'roboto-bold.woff2');
-let _fontBase64 = null;
-function getFontBase64() {
-  if (!_fontBase64) {
-    _fontBase64 = fs.readFileSync(FONT_PATH).toString('base64');
+const WATERMARK_PATH = path.join(__dirname, 'assets', 'watermark-preview.png');
+let _watermarkBuffer = null;
+function getWatermarkBuffer() {
+  if (!_watermarkBuffer) {
+    _watermarkBuffer = fs.readFileSync(WATERMARK_PATH);
   }
-  return _fontBase64;
-}
-
-// Marca d'água: só a palavra "PREVIEW", grande, centralizada, na diagonal —
-// sem caixa/moldura ao redor (removida a pedido, ficava estranha sem o texto
-// dentro).
-function buildWatermarkSvg(width, height) {
-  const fontSize = Math.round(width * 0.16);
-  const letterSpacing = Math.round(fontSize * 0.1);
-  const text = 'PREVIEW';
-  const cx = width / 2;
-  const cy = height / 2;
-  const fontBase64 = getFontBase64();
-
-  return Buffer.from(`
-    <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <style type="text/css">
-          @font-face {
-            font-family: 'PreviewWatermarkFont';
-            src: url(data:font/woff2;charset=utf-8;base64,${fontBase64}) format('woff2');
-            font-weight: 700;
-          }
-        </style>
-        <filter id="wmShadow" x="-60%" y="-60%" width="220%" height="220%">
-          <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.65"/>
-        </filter>
-      </defs>
-      <g transform="rotate(-28 ${cx} ${cy})">
-        <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
-              font-family="PreviewWatermarkFont" font-weight="700" font-size="${fontSize}"
-              letter-spacing="${letterSpacing}" fill="rgba(255,255,255,0.94)" filter="url(#wmShadow)">${text}</text>
-      </g>
-    </svg>
-  `);
+  return _watermarkBuffer;
 }
 
 /**
@@ -80,10 +52,18 @@ async function buildLockedPreview(rawImageBuffer) {
     .toBuffer({ resolveWithObject: true });
 
   const { data, info } = resized;
-  const watermarkSvg = buildWatermarkSvg(info.width, info.height);
+
+  // A marca d'água é um PNG quadrado — redimensionamos ela pra largura da
+  // prévia (mantendo a proporção quadrada) e centralizamos sobre a imagem
+  // (que normalmente é mais alta que larga, tipo retrato). Reproduz o mesmo
+  // efeito visual de antes (faixa diagonal centralizada) sem depender de
+  // nenhuma fonte do sistema em tempo de requisição.
+  const watermarkResized = await sharp(getWatermarkBuffer())
+    .resize({ width: info.width })
+    .toBuffer();
 
   return sharp(data)
-    .composite([{ input: watermarkSvg, top: 0, left: 0 }])
+    .composite([{ input: watermarkResized, gravity: 'center' }])
     .png({ quality: 72, compressionLevel: 8 })
     .toBuffer();
 }
