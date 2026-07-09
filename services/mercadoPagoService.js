@@ -72,6 +72,16 @@ async function getPayment(paymentId) {
 async function createDirectPayment(order, formData, publicUrl) {
   const payment = new Payment(getClient());
 
+  // Pix (e qualquer meio via "bank_transfer") exige CPF do pagador — sem
+  // isso a API da MP rejeita a criação do pagamento. O Brick normalmente já
+  // coleta isso sozinho quando o cliente escolhe Pix, mas garantimos aqui
+  // que o campo chegou preenchido antes de gastar uma chamada com a MP.
+  if (formData.payment_method_id === 'pix' && !formData.payer?.identification?.number) {
+    const err = new Error('CPF do pagador não informado — obrigatório para pagamento via Pix.');
+    err.friendly = true;
+    throw err;
+  }
+
   const body = {
     transaction_amount: PRICE_BRL,
     description: `PhotoPRO — Foto profissional (${order.style})`,
@@ -85,10 +95,33 @@ async function createDirectPayment(order, formData, publicUrl) {
   if (formData.installments) body.installments = formData.installments;
   if (formData.issuer_id) body.issuer_id = formData.issuer_id;
 
-  const result = await payment.create({
-    body,
-    requestOptions: { idempotencyKey: `${order.id}-${Date.now()}` },
-  });
+  let result;
+  try {
+    result = await payment.create({
+      body,
+      requestOptions: { idempotencyKey: `${order.id}-${Date.now()}` },
+    });
+  } catch (mpErr) {
+    // O SDK da MP joga um erro cuja causa real (o motivo da recusa/erro de
+    // validação) vem em `cause` (array de {code, description}) ou em
+    // `message`/`error.message` da resposta da API — nunca só um "erro
+    // genérico". Extraímos essa causa aqui pra logar (e devolver pro
+    // front-end) algo útil o suficiente pra diagnosticar sem precisar
+    // acessar o painel da MP toda vez.
+    const causeList = mpErr?.cause;
+    const causeDetail = Array.isArray(causeList) && causeList.length
+      ? causeList.map((c) => c.description || c.code).filter(Boolean).join('; ')
+      : null;
+    const detail = causeDetail || mpErr?.message || 'Erro desconhecido na API do Mercado Pago.';
+    console.error(`[order ${order.id}] Mercado Pago rejeitou o pagamento direto:`, {
+      status: mpErr?.status,
+      cause: causeList,
+      message: mpErr?.message,
+    });
+    const err = new Error(detail);
+    err.friendly = true;
+    throw err;
+  }
 
   const out = {
     id: result.id,
