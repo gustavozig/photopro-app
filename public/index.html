@@ -519,8 +519,10 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
    de display:none pra block a cada vez que a etapa 4 é exibida, essas
    animações reiniciam sozinhas, sem precisar de JS. */
 @keyframes fadeUpIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.app-panel[data-panel="4"] .price-card-title,
-.app-panel[data-panel="4"] .price-card-subtitle{
+.app-panel[data-panel="4"] .selfie-privacy-note{
+  animation: fadeUpIn .5s ease both; animation-delay:0s;
+}
+.app-panel[data-panel="4"] .price-card-title{
   animation: fadeUpIn .5s ease both; animation-delay:.08s;
 }
 .app-panel[data-panel="4"] .promo-timer-wrap{
@@ -540,6 +542,9 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 }
 .app-panel[data-panel="4"] .price-trust-note{
   animation: fadeUpIn .5s ease both; animation-delay:.44s;
+}
+.app-panel[data-panel="4"] .price-social-proof{
+  animation: fadeUpIn .5s ease both; animation-delay:.5s;
 }
 .result-frame img, .result-frame svg{width:100%;display:block;}
 .result-frame.locked .result-img{filter:blur(14px) saturate(0.8);}
@@ -591,15 +596,11 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
   .promo-timer-wrap{position:static;align-items:flex-start;margin-bottom:14px;}
 }
 .price-card-title{
-  font-size:16.5px;font-weight:800;line-height:1.35;margin:0 0 5px;
-  padding-right:104px;letter-spacing:-.01em;
-}
-.price-card-subtitle{
-  font-size:12.5px;color:var(--muted);margin:0 0 18px;line-height:1.5;
-  padding-right:104px;
+  font-size:19px;font-weight:800;line-height:1.3;margin:0 0 14px;
+  padding-right:90px;letter-spacing:-.01em;
 }
 @media (max-width:380px){
-  .price-card-title, .price-card-subtitle{padding-right:0;}
+  .price-card-title{padding-right:0;}
 }
 .price-offer-label{
   font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
@@ -610,6 +611,17 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
   font-size:11px;color:var(--muted-2);text-align:center;margin:14px 0 0;
   display:flex;align-items:center;justify-content:center;gap:6px;line-height:1.4;
 }
+.price-social-proof{
+  font-size:11px;color:var(--muted-2);text-align:center;margin:10px 0 0;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.result-col{display:flex;flex-direction:column;gap:10px;}
+.selfie-privacy-note{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:11px;color:var(--muted-2);text-align:center;line-height:1.4;
+  max-width:320px;margin:0 auto;
+}
+.selfie-privacy-note svg{width:13px;height:13px;flex-shrink:0;color:var(--muted-2);}
 .price-old{color:var(--muted-2);text-decoration:line-through;font-size:16px;}
 .price-row{display:flex;align-items:baseline;gap:10px;margin:6px 0 4px;flex-wrap:wrap;}
 .price-new{font-size:44px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;}
@@ -1134,6 +1146,11 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
       <!-- STEP 4: result -->
       <div class="app-panel" data-panel="4">
         <div class="result-grid">
+          <div class="result-col">
+            <p class="selfie-privacy-note">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 7H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 7V4.5C9 3.7 9.7 3 10.5 3H13.5C14.3 3 15 3.7 15 4.5V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 7L7 19.5C7.1 20.3 7.8 21 8.6 21H15.4C16.2 21 16.9 20.3 17 19.5L18 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11V17M14 11V17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              Sua selfie é excluída automaticamente dos nossos servidores em até 24 horas.
+            </p>
           <div class="result-frame locked" id="resultFrame">
             <div class="lock-chip" id="lockChip">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="currentColor" stroke-width="2"/></svg>
@@ -1151,6 +1168,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
             <div class="watermark"><span>PREVIEW</span></div>
             <div class="preview-pending-note">Preparando sua prévia real...</div>
           </div>
+          </div>
           <div class="price-card">
             <div class="promo-timer-wrap">
               <span class="promo-timer-label">Oferta expira em</span>
@@ -1159,8 +1177,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
                 <span id="promoTimerText">46:00</span>
               </div>
             </div>
-            <h3 class="price-card-title">Sua nova foto profissional está pronta para ser gerada.</h3>
-            <p class="price-card-subtitle">Falta apenas um passo para receber sua versão profissional em alta qualidade.</p>
+            <h3 class="price-card-title">Ficou incrível! ⭐</h3>
             <div class="price-offer-label">Oferta de lançamento</div>
             <div class="price-old">R$ 29,90</div>
             <div class="price-row">
@@ -1175,7 +1192,11 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
               <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Download imediato após o pagamento</li>
             </ul>
             <button class="btn btn-primary btn-block" id="unlockBtn">Desbloquear Minha Foto Agora</button>
-            <p class="price-trust-note">🔒 Sua imagem só será utilizada para gerar sua foto profissional.</p>
+            <p class="price-trust-note">🔒 Pagamento seguro • Compra única • Sem assinatura</p>
+            <p class="price-social-proof">
+              <span class="live-dot-sm"></span>
+              <span id="priceSocialText">9 pessoas gerando uma foto agora</span>
+            </p>
             <button class="btn btn-ghost btn-block" id="downloadBtn" style="display:none;margin-top:10px;">Baixar imagem</button>
           </div>
         </div>
@@ -2290,6 +2311,34 @@ function fillLoopTrack(track, buildOneCopyHtml){
   }
   tick();
   setInterval(tick, 1000);
+})();
+
+// ---------- contador social "pessoas gerando agora" na box de pagamento ----------
+// Mesmo espírito do contador da hero ("X fotos geradas hoje") e do
+// "Outras X pessoas estão gerando fotos agora" da etapa de fricção: só pra
+// passar a sensação de que não é a única pessoa usando o site agora. O
+// número oscila pra cima e pra baixo aleatoriamente dentro de uma faixa,
+// nunca sobe indefinidamente.
+(function(){
+  var el = document.getElementById('priceSocialText');
+  if(!el) return;
+  var MIN = 7, MAX = 15;
+  var count = 9 + Math.floor(Math.random() * 3); // começa entre 9 e 11
+
+  function render(){
+    el.textContent = count + ' pessoas gerando uma foto agora';
+  }
+  function scheduleNext(){
+    var delay = 3500 + Math.random() * 3000;
+    setTimeout(function(){
+      var delta = Math.floor(Math.random() * 3) - 1; // -1, 0 ou 1
+      count = Math.max(MIN, Math.min(MAX, count + delta));
+      render();
+      scheduleNext();
+    }, delay);
+  }
+  render();
+  scheduleNext();
 })();
 
 // ---------- faq accordion ----------
