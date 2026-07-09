@@ -144,7 +144,12 @@ router.post('/orders/:id/payments', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error(`[order ${order.id}] erro ao criar pagamento direto (Brick):`, err);
-    res.status(500).json({ error: 'Não foi possível processar o pagamento. Tente novamente.' });
+    // err.friendly (setado em mercadoPagoService) traz o motivo real (CPF
+    // faltando, meio de pagamento não habilitado na conta, etc.) — mostrar
+    // isso pro cliente/no console do navegador ajuda a diagnosticar rápido
+    // em vez de só um "tente novamente" genérico e opaco.
+    const detail = err && err.friendly ? err.message : 'Tente novamente.';
+    res.status(500).json({ error: detail });
   }
 });
 
