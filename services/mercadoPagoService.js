@@ -58,6 +58,58 @@ async function getPayment(paymentId) {
 }
 
 /**
+ * Cria um pagamento DIRETO via API de Payments (usado pelo Payment Brick
+ * embutido no modal — cartão ou Pix, sem redirecionar o cliente para fora
+ * do site). O status final de aprovação continua sendo confirmado só pelo
+ * webhook (ver routes/webhooks.js) — a resposta aqui é só o que a MP retorna
+ * na hora (para cartão, muitas vezes já vem "approved"; para Pix, vem
+ * "pending" com o QR code, até o cliente efetivamente pagar).
+ *
+ * @param {{id: string, style: string}} order
+ * @param {object} formData - dados devolvidos pelo callback onSubmit do Brick
+ * @param {string} publicUrl
+ */
+async function createDirectPayment(order, formData, publicUrl) {
+  const payment = new Payment(getClient());
+
+  const body = {
+    transaction_amount: PRICE_BRL,
+    description: `PhotoPRO — Foto profissional (${order.style})`,
+    payment_method_id: formData.payment_method_id,
+    payer: formData.payer,
+    external_reference: order.id,
+    notification_url: `${publicUrl}/api/webhooks/mercadopago`,
+    statement_descriptor: 'PHOTOPRO',
+  };
+  if (formData.token) body.token = formData.token;
+  if (formData.installments) body.installments = formData.installments;
+  if (formData.issuer_id) body.issuer_id = formData.issuer_id;
+
+  const result = await payment.create({
+    body,
+    requestOptions: { idempotencyKey: `${order.id}-${Date.now()}` },
+  });
+
+  const out = {
+    id: result.id,
+    status: result.status,
+    statusDetail: result.status_detail,
+    paymentMethodId: result.payment_method_id,
+  };
+
+  const txData = result.point_of_interaction?.transaction_data;
+  if (txData) {
+    out.pix = {
+      qrCode: txData.qr_code,
+      qrCodeBase64: txData.qr_code_base64,
+      ticketUrl: txData.ticket_url,
+    };
+  }
+
+  return out;
+}
+
+/**
  * Valida a assinatura HMAC do webhook do Mercado Pago (header x-signature).
  * Ver: https://www.mercadopago.com.br/developers/en/docs/checkout-pro/payment-notifications
  */
@@ -85,4 +137,10 @@ function verifyWebhookSignature(req) {
   return hmac === v1;
 }
 
-module.exports = { createCheckoutPreference, getPayment, verifyWebhookSignature, PRICE_BRL };
+module.exports = {
+  createCheckoutPreference,
+  createDirectPayment,
+  getPayment,
+  verifyWebhookSignature,
+  PRICE_BRL,
+};

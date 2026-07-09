@@ -28,6 +28,8 @@ const orders = new Map();
  * @property {string} selfieMimeType
  * @property {'pending_payment'|'generating'|'paid'|'generation_failed'|'payment_rejected'|'error'} status
  * @property {Buffer|null} fullImageBuffer
+ * @property {'pending'|'generating'|'ready'|'failed'} previewStatus - prévia barata (quality:'low'), gerada antes do pagamento
+ * @property {Buffer|null} previewImageBuffer - já vem com blur + marca d'água aplicados (services/previewService.js)
  * @property {string|null} error
  * @property {string|null} paymentId
  * @property {number} createdAt
@@ -41,6 +43,8 @@ function createOrder({ style, selfieBuffer, selfieMimeType }) {
     selfieMimeType,
     status: 'pending_payment',
     fullImageBuffer: null,
+    previewStatus: 'pending',
+    previewImageBuffer: null,
     error: null,
     paymentId: null,
     createdAt: Date.now(),
