@@ -1398,6 +1398,11 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
 </div>
 
 <script src="https://sdk.mercadopago.com/js/v2"></script>
+<!-- Device ID (antifraude MP) — cria window.MP_DEVICE_SESSION_ID automaticamente.
+     Enviado como header X-Meli-Session-Id na criação do pagamento (ver
+     services/mercadoPagoService.js). Reduz recusas indevidas e é um dos
+     fatores avaliados em "Qualidade da integração" no painel da MP. -->
+<script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
 <script>
 // ---------- live counter ----------
 (function(){
@@ -2435,6 +2440,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         payment_method_id: 'pix',
+        deviceId: window.MP_DEVICE_SESSION_ID || null,
         payer: {
           email: email,
           first_name: n.firstName,
@@ -2497,6 +2503,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
         token: token.id,
         payment_method_id: detectedPaymentMethodId,
         installments: 1,
+        deviceId: window.MP_DEVICE_SESSION_ID || null,
         payer: {
           email: email,
           first_name: n.firstName,
