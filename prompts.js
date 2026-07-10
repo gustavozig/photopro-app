@@ -4,17 +4,26 @@
 // "continua sendo você, só que pronto para currículo e LinkedIn".
 
 const IDENTITY_LOCK = `
-Edit this selfie into a professional headshot photograph.
+This is a photo EDIT, not a new generation: you are taking the exact person in the
+attached selfie and changing only their clothing, background, and lighting — treat the
+face itself as a fixed element being composited into a new scene, not something to redraw
+from scratch.
 CRITICAL — identity preservation (do not violate):
-- Keep the exact same person: same face shape, same eyes, same nose, same mouth,
-  same skin tone, same hairstyle and hair color, same approximate age.
+- Keep the exact same person: same face shape, same eyes and eye spacing, same eyebrow
+  shape, same nose, same mouth and lip shape, same jawline and chin, same ears, same skin
+  tone, same hairstyle, hairline and hair color, same approximate age.
+- Preserve any distinctive, identity-defining features exactly as shown in the original
+  photo — moles, freckles, scars, dimples, facial hair, glasses, asymmetries. These are
+  what make the person recognizable; removing or "fixing" them defeats the purpose.
 - Do not beautify, slim, reshape, or idealize the face. Do not change ethnicity or gender
   presentation. Do not enlarge the eyes, whiten the teeth beyond reality, or symmetrize
-  the face artificially.
+  the face artificially. This is not a filter or a digital-avatar generator — it is a
+  realistic edit of a real person's real face.
 - Preserve natural skin texture — visible pores, subtle blemishes, natural texture — this
   must look like a real unedited photograph of this exact person, not an idealized avatar.
-- The result must be immediately recognizable as the same individual in the original photo,
-  just professionally dressed, lit, and framed.
+- The result must pass this test: someone who knows this person well should recognize them
+  instantly, with zero doubt, purely from the face — before even noticing the new clothes
+  or background.
 Natural, realistic look (avoid the typical over-processed "AI portrait" look):
 - True-to-life, natural color grading: accurate, neutral skin tones. Do NOT oversaturate
   colors, do NOT apply HDR/neon color grading, do NOT over-sharpen.
