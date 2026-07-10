@@ -91,6 +91,92 @@ Wardrobe & setting for this version — "Fundo estúdio":
   classic studio headshot look, no environment or props at all.
 - Lighting: classic three-point studio portrait lighting (key, fill, and subtle rim light), crisp and
   polished, similar to professional portrait studio photography.`,
+
+  // ---------------------------------------------------------------------
+  // Estilos 5-12: pacote "Premium" (order bump). Mesmo IDENTITY_LOCK, só
+  // muda guarda-roupa/fundo/luz — mantém a variedade visual que o bump
+  // promete ("12 estilos exclusivos") sem nunca abrir mão da preservação
+  // de identidade que é a promessa central do produto.
+  // ---------------------------------------------------------------------
+
+  'Blazer premium': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Blazer premium":
+- Dress the subject in a sharply tailored dark blazer (charcoal or deep navy) over a plain fine-knit
+  top or shirt, no tie — an elevated, editorial-premium look.
+- Background: a softly blurred upscale modern building facade (glass and steel), out of focus bokeh,
+  suggesting a premium urban business setting.
+- Lighting: warm directional rim light separating the subject from the background, soft key light
+  from the front, premium editorial-portrait feel.`,
+
+  'Ambiente coworking': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Ambiente coworking":
+- Dress the subject in smart-casual attire: a button-down shirt or fine sweater, no tie, relaxed but
+  put-together.
+- Background: a softly blurred modern coworking space — warm wood tones, hints of greenery, large
+  windows — out of focus.
+- Lighting: soft natural daylight look, gentle and warm, approachable startup/creative-professional
+  mood while staying sharp and high quality.`,
+
+  'Fundo colorido': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Fundo colorido":
+- Dress the subject in clean, simple professional attire (solid-color shirt/blouse or blazer, no
+  patterns) that complements a colored backdrop.
+- Background: a smooth solid studio backdrop in a deep, elegant color (petrol blue or deep forest
+  green), perfectly even, no texture or props.
+- Lighting: studio lighting with a subtle matching-color rim light, clean and modern, contemporary
+  editorial-headshot look.`,
+
+  'Traje social completo': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Traje social completo":
+- Dress the subject in a full formal suit with tie (or formal blazer/blouse combination if the
+  subject presents as feminine), classic and polished.
+- Background: a softly blurred classic office/library setting with wood tones and bookshelves, out
+  of focus, traditional and authoritative.
+- Lighting: warm, classic portrait lighting with soft shadow modeling, timeless formal-executive
+  look.`,
+
+  'Estilo tech/startup': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Estilo tech/startup":
+- Dress the subject in a modern quarter-zip, fine knit, or open-collar shirt — no tie, contemporary
+  and minimal.
+- Background: a softly blurred modern tech-office setting with subtle blue/purple ambient lighting,
+  out of focus.
+- Lighting: soft contemporary studio light with a cool-toned accent, clean and modern, startup/tech
+  professional mood.`,
+
+  'Ambiente externo urbano': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Ambiente externo urbano":
+- Dress the subject in smart business-casual attire (blazer, no tie), polished but suited for an
+  outdoor setting.
+- Background: a softly blurred outdoor urban business district — glass office buildings, daylight —
+  out of focus bokeh.
+- Lighting: natural daylight look, soft and directional as if shot golden-hour outdoors, editorial
+  outdoor-headshot feel.`,
+
+  'Retrato clássico': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Retrato clássico":
+- Dress the subject in a classic suit or blazer, timeless and formal, neutral solid colors.
+- Background: a smooth dark charcoal-to-black gradient backdrop, no texture or props, classic studio
+  portrait look.
+- Lighting: classic Rembrandt-style portrait lighting — soft directional key light with gentle,
+  controlled shadow modeling — timeless, high-end portrait-studio quality.`,
+
+  'Visual criativo moderno': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Visual criativo moderno":
+- Dress the subject in a structured blazer over a simple plain top, modern and clean, minimal
+  accessories.
+- Background: a soft two-tone gradient studio backdrop (subtle, modern, neutral-to-cool tones), no
+  texture or props.
+- Lighting: contemporary editorial studio lighting, soft and even with subtle directional shaping,
+  clean modern creative-professional look.`,
 };
 
 const DEFAULT_STYLE = 'Corporativo neutro';
@@ -99,4 +185,11 @@ function getPromptForStyle(styleName) {
   return STYLE_PROMPTS[styleName] || STYLE_PROMPTS[DEFAULT_STYLE];
 }
 
-module.exports = { getPromptForStyle, STYLE_PROMPTS, DEFAULT_STYLE };
+// Usado pelo order bump ("Pacote Premium"): devolve os outros 11 estilos do
+// catálogo (todos exceto o que o cliente já escolheu no fluxo base), pra
+// completar o conjunto de 12 fotos prometido na oferta.
+function getOtherStyles(styleName) {
+  return Object.keys(STYLE_PROMPTS).filter((name) => name !== styleName);
+}
+
+module.exports = { getPromptForStyle, getOtherStyles, STYLE_PROMPTS, DEFAULT_STYLE };
