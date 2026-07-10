@@ -528,6 +528,32 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 /* result */
 .result-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:36px;align-items:center;}
 @media (max-width:860px){.result-grid{grid-template-columns:1fr;}}
+
+/* Pacote Premium (order bump) — galeria das outras 11 fotos, abaixo do
+   resultado principal */
+.bump-gallery-section{margin-top:36px;padding-top:28px;border-top:1px solid var(--border);}
+.bump-gallery-head{text-align:center;margin-bottom:18px;}
+.bump-gallery-head h3{margin:0 0 4px;font-size:19px;}
+.bump-gallery-head p{margin:0;color:var(--muted);font-size:13px;}
+.bump-gallery-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;max-width:900px;margin:0 auto;
+}
+.bump-gallery-item{
+  position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:var(--card);aspect-ratio:4/5;
+}
+.bump-gallery-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.bump-gallery-item .bump-item-label{
+  position:absolute;left:0;right:0;bottom:0;padding:6px 8px 5px;font-size:10.5px;color:#fff;
+  background:linear-gradient(to top,rgba(0,0,0,.75),transparent);line-height:1.25;
+}
+.bump-gallery-item .bump-item-dl{
+  position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;border:none;
+}
+.bump-gallery-item .bump-item-dl:hover{background:var(--green);color:#06120c;}
+.bump-gallery-loading{
+  display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;grid-column:1/-1;padding:20px 0;
+}
 .result-frame{
   position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:#000;
   max-width:320px;margin:0 auto;
@@ -670,7 +696,35 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .field input:focus{outline:none;border-color:var(--green);}
 .field-row{display:flex;gap:10px;}
 .pay-total{display:flex;justify-content:space-between;align-items:center;margin:18px 0;padding-top:14px;border-top:1px dashed var(--border);font-size:14px;}
-.pay-total strong{font-size:20px;}
+.pay-total strong{font-size:20px;transition:color .2s;}
+.pay-total strong.bump-active{color:var(--gold, #f5c451);}
+
+/* Order bump "Pacote Premium" — compacto, fundo dourado sutil pra destacar
+   sem competir com o CTA de pagamento (verde). Checkbox vem marcado por
+   padrão: a caixinha desmarcar é que deve parecer a decisão ativa. */
+.bump-card{
+  --gold:#f5c451;
+  background:linear-gradient(135deg,rgba(245,196,81,.10),rgba(245,196,81,.04));
+  border:1px solid rgba(245,196,81,.35);border-radius:14px;padding:12px 13px;margin:14px 0 4px;
+}
+.bump-head{display:flex;align-items:flex-start;gap:9px;cursor:pointer;user-select:none;}
+.bump-checkbox{
+  flex-shrink:0;width:19px;height:19px;margin-top:1px;border-radius:5px;border:1.5px solid var(--gold);
+  background:var(--gold);display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s;
+}
+.bump-checkbox svg{width:12px;height:12px;color:#1a1206;display:block;}
+.bump-card.off .bump-checkbox{background:transparent;}
+.bump-card.off .bump-checkbox svg{display:none;}
+.bump-card.off{border-color:var(--border);background:var(--card-2);}
+.bump-card.off .bump-title,.bump-card.off .bump-badge{color:var(--muted);}
+.bump-title{font-size:13.5px;font-weight:700;color:var(--gold);line-height:1.3;margin:0;}
+.bump-badge{font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;margin-left:auto;padding-left:8px;}
+.bump-copy{font-size:11.5px;color:var(--muted);margin:6px 0 8px;line-height:1.4;}
+.bump-benefits{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin:0 0 8px;padding:0;}
+.bump-benefits li{font-size:11px;color:var(--text);display:flex;align-items:flex-start;gap:5px;line-height:1.35;}
+.bump-benefits li span{color:var(--green);flex-shrink:0;}
+.bump-urgency{font-size:10.5px;font-weight:600;color:var(--gold);background:rgba(245,196,81,.12);border-radius:6px;padding:5px 8px;margin:0;text-align:center;}
+@media (max-width:420px){.bump-benefits{grid-template-columns:1fr;}}
 .modal-lock-note{display:flex;align-items:center;gap:6px;justify-content:center;font-size:11px;color:var(--muted-2);margin-top:14px;}
 .modal-legal-note{font-size:10.5px;color:var(--muted-2);text-align:center;margin:8px 0 0;line-height:1.5;}
 .modal-legal-note a{color:var(--muted);text-decoration:underline;}
@@ -1253,6 +1307,18 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
           </div>
         </div>
 
+        <!-- Pacote Premium: galeria com as outras 11 fotos, só aparece pra
+             quem comprou o order bump. Enquanto ainda estão sendo geradas
+             (bumpStatus 'generating'), mostra um aviso — a foto principal já
+             fica liberada normalmente nesse meio-tempo (ver revealPaidResult). -->
+        <div class="bump-gallery-section" id="bumpGallerySection" style="display:none;">
+          <div class="bump-gallery-head">
+            <h3>🎁 Seu Pacote Premium</h3>
+            <p id="bumpGalleryStatus">Gerando suas outras 11 fotos, só um instante...</p>
+          </div>
+          <div class="bump-gallery-grid" id="bumpGalleryGrid"></div>
+        </div>
+
         <!-- Loading real pós-pagamento: só aparece depois que o pagamento é confirmado -->
         <div class="generating-state" id="generatingState" style="display:none;">
           <div class="loading-ring" style="width:64px;height:64px;margin:0 auto 18px;">
@@ -1280,7 +1346,31 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
       <p class="desc" id="modalPayDesc">Pague direto por aqui, sem sair do site — cartão ou Pix.</p>
       <div class="pay-total">
         <span>Total</span>
-        <strong>R$ 9,90</strong>
+        <strong id="payTotalValue">R$ 19,80</strong>
+      </div>
+
+      <!-- Order bump "Pacote Premium": desbloqueia os outros 11 estilos do
+           catálogo por +R$ 9,90. Vem marcado por padrão (id="bumpCard" sem
+           classe "off") — o total já nasce em R$ 19,80 e o preço muda pra
+           R$ 9,90 se o cliente desmarcar. O estado é lido em bumpSelected()
+           na hora de montar o payload do pagamento (ver mais abaixo). -->
+      <div class="bump-card" id="bumpCard">
+        <div class="bump-head" id="bumpHead">
+          <span class="bump-checkbox" id="bumpCheckbox">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5L9.5 17L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="bump-title">⭐ Desbloqueie o Pacote Premium por apenas +R$ 9,90</span>
+          <span class="bump-badge">+R$ 9,90</span>
+        </div>
+        <p class="bump-copy">Aproveite esta oferta exclusiva e receba muito mais opções para escolher sua foto perfeita.</p>
+        <ul class="bump-benefits">
+          <li><span>✅</span> 12 fotos profissionais em alta resolução</li>
+          <li><span>✅</span> 12 estilos exclusivos</li>
+          <li><span>✅</span> Fundos premium</li>
+          <li><span>✅</span> Iluminação profissional</li>
+          <li><span>✅</span> Versões prontas para LinkedIn, currículo e WhatsApp</li>
+        </ul>
+        <p class="bump-urgency">Disponível somente durante este pagamento.</p>
       </div>
 
       <!-- Checkout customizado (Checkout Transparente da MP) — 100% no design
@@ -1364,7 +1454,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
           <input type="email" id="cardEmail" placeholder="seu@email.com" autocomplete="email">
         </div>
         <p class="cf-error" id="cfError" style="display:none;"></p>
-        <button type="button" class="btn btn-primary btn-block" id="cardSubmitBtn">Pagar R$ 9,90</button>
+        <button type="button" class="btn btn-primary btn-block" id="cardSubmitBtn">Pagar R$ 19,80</button>
         <p class="cf-secure-note">
           <svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="currentColor" stroke-width="1.8"/></svg>
           Dados do cartão criptografados pelo Mercado Pago
@@ -2141,6 +2231,11 @@ function fillLoopTrack(track, buildOneCopyHtml){
     resultFrame.classList.remove('unlocked', 'has-real-preview', 'preview-loading');
     document.getElementById('unlockBtn').style.display = 'inline-flex';
     document.getElementById('downloadBtn').style.display = 'none';
+    if(bumpPollInterval) clearInterval(bumpPollInterval);
+    var bumpSection = document.getElementById('bumpGallerySection');
+    if(bumpSection){ bumpSection.style.display = 'none'; }
+    var bumpGrid = document.getElementById('bumpGalleryGrid');
+    if(bumpGrid) bumpGrid.innerHTML = '';
     goTo(1);
     var heroEl = document.getElementById('hero');
     if(heroEl) heroEl.scrollIntoView({behavior:'smooth'});
@@ -2169,6 +2264,9 @@ function fillLoopTrack(track, buildOneCopyHtml){
   var pixBox = document.getElementById('pixBox');
   var cfError = document.getElementById('cfError');
   var payBtnFallback = document.getElementById('payBtn');
+  var bumpCard = document.getElementById('bumpCard');
+  var bumpHead = document.getElementById('bumpHead');
+  var payTotalValue = document.getElementById('payTotalValue');
 
   var mpConfigPromise = null;
   function getMpConfig(){
@@ -2219,10 +2317,40 @@ function fillLoopTrack(track, buildOneCopyHtml){
     window.fbq('trackCustom', eventName, params || {});
   }
   var sitePriceBRL = 9.90;
+  var bumpPriceBRL = 9.90; // order bump "Pacote Premium" — o valor real cobrado é sempre recalculado no servidor
   getMpConfig().then(function(cfg){
     if(cfg && cfg.priceBRL) sitePriceBRL = cfg.priceBRL;
     if(cfg && cfg.metaPixelId) initMetaPixel(cfg.metaPixelId);
+    updateBumpUI();
   });
+
+  // ---- Order bump "Pacote Premium" — vem marcado por padrão ----
+  var bumpSelected = true;
+  function formatBRL(value){
+    return 'R$ ' + value.toFixed(2).replace('.', ',');
+  }
+  function currentTotalBRL(){
+    return sitePriceBRL + (bumpSelected ? bumpPriceBRL : 0);
+  }
+  function updateBumpUI(){
+    bumpCard.classList.toggle('off', !bumpSelected);
+    if(payTotalValue){
+      payTotalValue.textContent = formatBRL(currentTotalBRL());
+      payTotalValue.classList.toggle('bump-active', bumpSelected);
+    }
+    var cardBtn = document.getElementById('cardSubmitBtn');
+    // não sobrescreve o texto do botão enquanto ele está em estado de
+    // "Processando..." (evita um flash de preço no meio do envio)
+    if(cardBtn && !cardBtn.disabled){
+      cardBtn.textContent = 'Pagar ' + formatBRL(currentTotalBRL());
+    }
+  }
+  if(bumpHead){
+    bumpHead.addEventListener('click', function(){
+      bumpSelected = !bumpSelected;
+      updateBumpUI();
+    });
+  }
   var checkoutEventFired = false;
   function fireInitiateCheckoutOnce(){
     if(checkoutEventFired || !currentOrderId) return;
@@ -2233,7 +2361,10 @@ function fillLoopTrack(track, buildOneCopyHtml){
   function firePurchaseOnce(orderId){
     if(purchaseEventFired) return;
     purchaseEventFired = true;
-    metaTrackStandard('Purchase', { value: sitePriceBRL, currency: 'BRL' }, 'purchase_' + orderId);
+    // currentTotalBRL() reflete o bump se ele estava marcado no momento do
+    // envio do pagamento (bumpSelected só muda de novo num reset do modal,
+    // que só acontece numa nova tentativa de checkout).
+    metaTrackStandard('Purchase', { value: currentTotalBRL(), currency: 'BRL' }, 'purchase_' + orderId);
   }
 
   var mpInstance = null;
@@ -2299,7 +2430,9 @@ function fillLoopTrack(track, buildOneCopyHtml){
     var pixBtn = document.getElementById('pixSubmitBtn');
     pixBtn.disabled = false; pixBtn.textContent = 'Gerar QR Code Pix';
     var cardBtn = document.getElementById('cardSubmitBtn');
-    cardBtn.disabled = false; cardBtn.textContent = 'Pagar R$ 9,90';
+    cardBtn.disabled = false;
+    bumpSelected = true; // cada nova tentativa de checkout começa com o bump marcado
+    updateBumpUI();
   }
 
   function mountFallbackButton(){
@@ -2391,7 +2524,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     if(result.status === 'rejected'){
       showCfError('Pagamento recusado. Tente novamente com outro cartão ou escolha Pix.');
       var cardBtn = document.getElementById('cardSubmitBtn');
-      cardBtn.disabled = false; cardBtn.textContent = 'Pagar R$ 9,90';
+      cardBtn.disabled = false; cardBtn.textContent = 'Pagar ' + formatBRL(currentTotalBRL());
       return;
     }
     // 'approved', 'in_process' ou 'pending' (cartão em análise): mostra
@@ -2441,6 +2574,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
       body: JSON.stringify({
         payment_method_id: 'pix',
         deviceId: window.MP_DEVICE_SESSION_ID || null,
+        bump: bumpSelected,
         payer: {
           email: email,
           first_name: n.firstName,
@@ -2504,6 +2638,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
         payment_method_id: detectedPaymentMethodId,
         installments: 1,
         deviceId: window.MP_DEVICE_SESSION_ID || null,
+        bump: bumpSelected,
         payer: {
           email: email,
           first_name: n.firstName,
@@ -2520,7 +2655,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
       }).then(function(r){ return r.json().then(function(body){ return { ok: r.ok, body: body }; }); });
     }).then(function(res){
       btn.disabled = false;
-      btn.textContent = 'Pagar R$ 9,90';
+      btn.textContent = 'Pagar ' + formatBRL(currentTotalBRL());
       if(!res.ok || res.body.error){
         showCfError(res.body.error || 'Não foi possível processar o pagamento. Tente novamente.');
         return;
@@ -2528,7 +2663,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
       handleDirectPaymentResult(res.body);
     }).catch(function(){
       btn.disabled = false;
-      btn.textContent = 'Pagar R$ 9,90';
+      btn.textContent = 'Pagar ' + formatBRL(currentTotalBRL());
       showCfError('Não foi possível processar o cartão. Confira os dados e tente novamente.');
     });
   });
@@ -2633,6 +2768,88 @@ function fillLoopTrack(track, buildOneCopyHtml){
     if(genEl) genEl.style.display = 'none';
   }
 
+  // ---- Pacote Premium (order bump): galeria com as outras 11 fotos ----
+  // Roda em paralelo ao pollUntilPaid principal, só pra quem comprou o
+  // bump. A foto principal já aparece pro cliente (revealPaidResult) antes
+  // dessa galeria terminar de gerar — não faz sentido segurar a entrega do
+  // pedido base esperando o pacote inteiro.
+  var bumpPollInterval = null;
+  function pollBumpGallery(orderId){
+    var section = document.getElementById('bumpGallerySection');
+    var statusEl = document.getElementById('bumpGalleryStatus');
+    var grid = document.getElementById('bumpGalleryGrid');
+    section.style.display = 'block';
+    statusEl.textContent = 'Gerando suas outras 11 fotos, só um instante...';
+    grid.innerHTML = '<div class="bump-gallery-loading">Isso pode levar um minuto...</div>';
+    if(bumpPollInterval) clearInterval(bumpPollInterval);
+    var bumpAttempts = 0;
+    function check(){
+      bumpAttempts++;
+      fetch('/api/orders/' + orderId)
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if(data.bumpStatus === 'ready' && Array.isArray(data.bumpImages)){
+            clearInterval(bumpPollInterval);
+            renderBumpGallery(data.bumpImages);
+          } else if(data.bumpStatus === 'failed'){
+            clearInterval(bumpPollInterval);
+            statusEl.textContent = 'Não conseguimos gerar as fotos extras agora. Fale com o suporte informando o pedido ' + orderId + '.';
+            grid.innerHTML = '';
+          } else if(bumpAttempts > 60){
+            clearInterval(bumpPollInterval);
+            statusEl.textContent = 'Está demorando mais que o esperado — atualize a página em instantes.';
+          }
+          // 'generating' -> continua aguardando
+        })
+        .catch(function(){ /* tenta de novo no próximo ciclo */ });
+    }
+    check();
+    bumpPollInterval = setInterval(check, 3000);
+  }
+
+  function downloadImage(dataUrl, filename){
+    var a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function renderBumpGallery(images){
+    var statusEl = document.getElementById('bumpGalleryStatus');
+    var grid = document.getElementById('bumpGalleryGrid');
+    statusEl.textContent = images.length + ' fotos prontas para baixar.';
+    grid.innerHTML = '';
+    images.forEach(function(item){
+      var cell = document.createElement('div');
+      cell.className = 'bump-gallery-item';
+
+      var img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.style;
+
+      var label = document.createElement('div');
+      label.className = 'bump-item-label';
+      label.textContent = item.style;
+
+      var dl = document.createElement('button');
+      dl.type = 'button';
+      dl.className = 'bump-item-dl';
+      dl.title = 'Baixar';
+      dl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3V15M12 15L7 10M12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+      dl.addEventListener('click', function(){
+        var safeName = item.style.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-');
+        downloadImage(item.image, 'photopro-' + safeName + '.png');
+      });
+
+      cell.appendChild(img);
+      cell.appendChild(label);
+      cell.appendChild(dl);
+      grid.appendChild(cell);
+    });
+  }
+
   function pollUntilPaid(orderId){
     var attempts = 0;
     showGeneratingState();
@@ -2648,6 +2865,9 @@ function fillLoopTrack(track, buildOneCopyHtml){
             lastFullImage = data.fullImage;
             firePurchaseOnce(orderId);
             revealPaidResult();
+            if(data.bumpPurchased){
+              pollBumpGallery(orderId);
+            }
           } else if(data.status === 'generation_failed'){
             clearInterval(paidPollInterval);
             hideGeneratingState();
