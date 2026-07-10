@@ -40,6 +40,7 @@ function serializeOrder(order) {
     status: order.status,
     style: order.style,
     previewStatus: order.previewStatus,
+    bumpPurchased: !!order.bumpPurchased,
   };
   if (order.error) out.error = order.error;
   if (order.previewStatus === 'ready' && order.previewImageBuffer) {
@@ -47,6 +48,19 @@ function serializeOrder(order) {
   }
   if (order.status === 'paid' && order.fullImageBuffer) {
     out.fullImage = `data:image/png;base64,${order.fullImageBuffer.toString('base64')}`;
+  }
+  // Pacote Premium: enquanto as 11 fotos extras ainda estão sendo geradas,
+  // o front-end já pode revelar a foto principal (acima) e mostrar um
+  // estado de "gerando o resto do pacote" — só manda o array completo
+  // quando bumpStatus vira 'ready'.
+  if (order.bumpPurchased) {
+    out.bumpStatus = order.bumpStatus;
+    if (order.bumpStatus === 'ready' && Array.isArray(order.bumpImages)) {
+      out.bumpImages = order.bumpImages.map((img) => ({
+        style: img.style,
+        image: `data:image/png;base64,${img.imageBuffer.toString('base64')}`,
+      }));
+    }
   }
   return out;
 }
@@ -165,6 +179,14 @@ router.post('/orders/:id/payments', async (req, res) => {
   try {
     const publicUrl = req.app.get('publicUrl');
     const result = await mercadoPagoService.createDirectPayment(order, req.body || {}, publicUrl);
+    // Só marcamos o bump como comprado depois que a MP aceitou criar o
+    // pagamento com esse valor (result.bumpPurchased reflete o que foi
+    // efetivamente cobrado — nunca o que o front-end pediu). A geração das
+    // 11 fotos extras só acontece depois, quando o webhook confirmar o
+    // pagamento aprovado (ver routes/webhooks.js).
+    if (result.bumpPurchased) {
+      orderStore.updateOrder(order.id, { bumpPurchased: true });
+    }
     res.json(result);
   } catch (err) {
     console.error(`[order ${order.id}] erro ao criar pagamento direto (Brick):`, err);

@@ -4,6 +4,7 @@ const orderStore = require('../services/orderStore');
 const mercadoPagoService = require('../services/mercadoPagoService');
 const openaiService = require('../services/openaiService');
 const metaCapiService = require('../services/metaCapiService');
+const { getOtherStyles } = require('../prompts');
 
 const router = express.Router();
 
@@ -52,9 +53,12 @@ router.post('/webhooks/mercadopago', async (req, res) => {
         // event_id usa o mesmo formato disparado pelo pixel no navegador
         // (index.html, dentro de pollUntilPaid) pra o Meta deduplicar.
         const publicUrl = req.app.get('publicUrl');
+        const purchaseValue = order.bumpPurchased
+          ? mercadoPagoService.PRICE_BRL + mercadoPagoService.BUMP_PRICE_BRL
+          : mercadoPagoService.PRICE_BRL;
         metaCapiService.sendPurchaseEvent({
           orderId: order.id,
-          value: mercadoPagoService.PRICE_BRL,
+          value: purchaseValue,
           email: payment.payer?.email || null,
           clientIp: order.clientIp,
           userAgent: order.userAgent,
@@ -91,7 +95,9 @@ async function runGenerationInBackground(orderId) {
     orderStore.updateOrder(orderId, {
       status: 'paid',
       fullImageBuffer,
-      selfieBuffer: null, // não precisamos mais guardar a selfie original
+      // selfieBuffer só é apagado depois — se o cliente comprou o Pacote
+      // Premium, ainda precisamos dela pra gerar os outros 11 estilos (ver
+      // runBumpGenerationInBackground abaixo). Se não comprou, apagamos já.
     });
   } catch (err) {
     console.error(`[order ${orderId}] geração falhou após pagamento aprovado:`, err.message || err);
@@ -102,7 +108,77 @@ async function runGenerationInBackground(orderId) {
       status: 'generation_failed',
       error: 'Seu pagamento foi aprovado, mas tivemos um problema ao gerar sua foto. Nossa equipe foi notificada e vai resolver isso rapidamente — entre em contato pelo suporte informando o número do pedido.',
     });
+    return; // sem foto principal, não faz sentido tentar o Pacote Premium
   }
+
+  const freshOrder = orderStore.getOrder(orderId);
+  if (freshOrder && freshOrder.bumpPurchased) {
+    runBumpGenerationInBackground(orderId);
+  } else {
+    orderStore.updateOrder(orderId, { selfieBuffer: null });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Order bump "Pacote Premium": gera as outras 11 variações de estilo (todo o
+// catálogo de prompts.js exceto o estilo já escolhido no fluxo base) e
+// entrega como uma galeria adicional. Roda DEPOIS que a foto principal já
+// está pronta (o cliente não fica esperando o pacote inteiro pra ver o
+// resultado do pedido base) — o front-end faz polling de `bumpStatus`
+// separadamente (ver GET /api/orders/:id).
+//
+// Usa um pool de concorrência limitada (não Promise.all direto) pra não
+// disparar 11 chamadas simultâneas à API da OpenAI de uma vez — reduz risco
+// de rate limit e picos de memória. Falhas individuais não derrubam o
+// pacote inteiro: entregamos o que conseguimos gerar (Promise.allSettled-like).
+// ---------------------------------------------------------------------------
+const BUMP_CONCURRENCY = 3;
+
+async function mapWithConcurrency(items, limit, fn) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+  async function worker() {
+    while (nextIndex < items.length) {
+      const current = nextIndex++;
+      try {
+        results[current] = { ok: true, value: await fn(items[current]) };
+      } catch (err) {
+        results[current] = { ok: false, error: err };
+      }
+    }
+  }
+  const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
+async function runBumpGenerationInBackground(orderId) {
+  const order = orderStore.getOrder(orderId);
+  if (!order || !order.selfieBuffer) return;
+
+  orderStore.updateOrder(orderId, { bumpStatus: 'generating' });
+
+  const otherStyles = getOtherStyles(order.style); // os outros 11 estilos do catálogo
+  const results = await mapWithConcurrency(otherStyles, BUMP_CONCURRENCY, async (styleName) => {
+    const imageBuffer = await openaiService.generateProfessionalPhoto(
+      order.selfieBuffer,
+      order.selfieMimeType,
+      styleName
+    );
+    return { style: styleName, imageBuffer };
+  });
+
+  const bumpImages = results.filter((r) => r.ok).map((r) => r.value);
+  const failedCount = results.length - bumpImages.length;
+  if (failedCount > 0) {
+    console.error(`[order ${orderId}] ${failedCount}/${results.length} fotos do Pacote Premium falharam na geração.`);
+  }
+
+  orderStore.updateOrder(orderId, {
+    bumpStatus: bumpImages.length > 0 ? 'ready' : 'failed',
+    bumpImages,
+    selfieBuffer: null, // agora sim, não precisamos mais dela
+  });
 }
 
 module.exports = router;
