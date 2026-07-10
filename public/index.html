@@ -375,9 +375,17 @@ section{padding:80px 0;}
 .style-card.selected{border-color:var(--green);box-shadow:0 0 0 1px var(--green) inset;}
 .style-swatch{
   width:100%;aspect-ratio:1;border-radius:10px;margin-bottom:10px;overflow:hidden;background:#000;
+  position:relative;
 }
 .style-swatch svg{width:100%;height:100%;}
 .style-swatch img{width:100%;height:100%;object-fit:cover;display:block;}
+/* alterna entre um exemplo feminino e um masculino em cada card de estilo,
+   mesmo mecanismo de crossfade usado no carrossel de exemplos (ver
+   .example-layer) — só a duração/atraso mudam pra não sincronizar os 4
+   cards ao mesmo tempo. */
+.swatch-layer{position:absolute;inset:0;}
+.swatch-layer.is-b{opacity:0;animation:swatchCrossfade 9s ease-in-out infinite;}
+@keyframes swatchCrossfade{0%,42%{opacity:0;}50%,92%{opacity:1;}100%{opacity:0;}}
 .style-card h4{font-size:13px;margin:0 0 2px;}
 .style-card span{font-size:11px;color:var(--muted-2);}
 .panel-actions{display:flex;justify-content:center;gap:12px;margin-top:28px;}
@@ -1071,19 +1079,31 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
       <div class="app-panel" data-panel="2">
         <div class="style-grid">
           <div class="style-card" data-style="Executivo(a)">
-            <div class="style-swatch"><img src="/images/exemplos/executivo-1-depois.webp" alt="Exemplo estilo Executivo(a)" loading="lazy"></div>
+            <div class="style-swatch">
+              <img src="/images/exemplos/executivo-1-depois.webp" alt="Exemplo estilo Executivo(a)" loading="lazy">
+              <div class="swatch-layer is-b" style="animation-delay:0s;"><img src="/images/exemplos/executivo-2-depois.webp" alt="Exemplo estilo Executivo(a) — variação" loading="lazy"></div>
+            </div>
             <h4>Executivo(a)</h4><span>Terno + fundo escritório</span>
           </div>
           <div class="style-card" data-style="Corporativo neutro">
-            <div class="style-swatch"><img src="/images/exemplos/corporativo-depois.webp" alt="Exemplo estilo Corporativo neutro" loading="lazy"></div>
+            <div class="style-swatch">
+              <img src="/images/exemplos/corporativo-1-depois.webp" alt="Exemplo estilo Corporativo neutro" loading="lazy">
+              <div class="swatch-layer is-b" style="animation-delay:2.25s;"><img src="/images/exemplos/corporativo-2-depois.webp" alt="Exemplo estilo Corporativo neutro — variação" loading="lazy"></div>
+            </div>
             <h4>Corporativo neutro</h4><span>Fundo cinza liso</span>
           </div>
           <div class="style-card" data-style="Casual elegante">
-            <div class="style-swatch"><img src="/images/exemplos/casual-depois.webp" alt="Exemplo estilo Casual elegante" loading="lazy"></div>
+            <div class="style-swatch">
+              <img src="/images/exemplos/casual-1-depois.webp" alt="Exemplo estilo Casual elegante" loading="lazy">
+              <div class="swatch-layer is-b" style="animation-delay:4.5s;"><img src="/images/exemplos/casual-2-depois.webp" alt="Exemplo estilo Casual elegante — variação" loading="lazy"></div>
+            </div>
             <h4>Casual elegante</h4><span>Sem gravata, tom leve</span>
           </div>
           <div class="style-card" data-style="Fundo estúdio">
-            <div class="style-swatch"><img src="/images/exemplos/estudio-depois.webp" alt="Exemplo estilo Fundo estúdio" loading="lazy"></div>
+            <div class="style-swatch">
+              <img src="/images/exemplos/estudio-1-depois.webp" alt="Exemplo estilo Fundo estúdio" loading="lazy">
+              <div class="swatch-layer is-b" style="animation-delay:6.75s;"><img src="/images/exemplos/estudio-2-depois.webp" alt="Exemplo estilo Fundo estúdio — variação" loading="lazy"></div>
+            </div>
             <h4>Fundo estúdio</h4><span>Fundo infinito neutro</span>
           </div>
         </div>
@@ -1416,14 +1436,18 @@ function fillLoopTrack(track, buildOneCopyHtml){
 (function(){
   var track = document.getElementById('exampleTrack');
   if(!track) return;
-  // Fotos reais de antes/depois (enviadas pelo usuário). Executivo(a) tem 2
-  // exemplos (pessoas diferentes) pra mostrar variedade dentro do mesmo estilo.
+  // Fotos reais de antes/depois (enviadas pelo usuário). Cada estilo tem
+  // pelo menos 2 exemplos (pessoas diferentes, masculino e feminino) pra
+  // mostrar variedade dentro do mesmo estilo — Executivo(a) tem 3.
   var examples = [
     { name:'Executivo(a)', before:'/images/exemplos/executivo-1-antes.webp', after:'/images/exemplos/executivo-1-depois.webp' },
-    { name:'Corporativo neutro', before:'/images/exemplos/corporativo-antes.webp', after:'/images/exemplos/corporativo-depois.webp' },
-    { name:'Casual elegante', before:'/images/exemplos/casual-antes.webp', after:'/images/exemplos/casual-depois.webp' },
-    { name:'Fundo estúdio', before:'/images/exemplos/estudio-antes.webp', after:'/images/exemplos/estudio-depois.webp' },
-    { name:'Executivo(a)', before:'/images/exemplos/executivo-2-antes.webp', after:'/images/exemplos/executivo-2-depois.webp' }
+    { name:'Corporativo neutro', before:'/images/exemplos/corporativo-1-antes.webp', after:'/images/exemplos/corporativo-1-depois.webp' },
+    { name:'Casual elegante', before:'/images/exemplos/casual-1-antes.webp', after:'/images/exemplos/casual-1-depois.webp' },
+    { name:'Fundo estúdio', before:'/images/exemplos/estudio-1-antes.webp', after:'/images/exemplos/estudio-1-depois.webp' },
+    { name:'Executivo(a)', before:'/images/exemplos/executivo-2-antes.webp', after:'/images/exemplos/executivo-2-depois.webp' },
+    { name:'Casual elegante', before:'/images/exemplos/casual-2-antes.webp', after:'/images/exemplos/casual-2-depois.webp' },
+    { name:'Corporativo neutro', before:'/images/exemplos/corporativo-2-antes.webp', after:'/images/exemplos/corporativo-2-depois.webp' },
+    { name:'Executivo(a)', before:'/images/exemplos/executivo-3-antes.webp', after:'/images/exemplos/executivo-3-depois.webp' }
   ];
   function buildOneCopy(){
     var out = '';
