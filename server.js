@@ -30,6 +30,12 @@ app.get('/api/config', (req, res) => {
   res.json({
     mpPublicKey: process.env.MP_PUBLIC_KEY || null,
     priceBRL: mercadoPagoService.PRICE_BRL,
+    // Pixel ID é público por natureza (fica exposto no HTML de qualquer site
+    // que usa Meta Pixel) — diferente do META_CAPI_ACCESS_TOKEN, que é
+    // secreto e nunca sai do servidor (só usado em services/metaCapiService.js).
+    // Se META_PIXEL_ID não estiver configurado, o front-end simplesmente não
+    // inicializa o pixel (sem quebrar nada).
+    metaPixelId: process.env.META_PIXEL_ID || null,
   });
 });
 
