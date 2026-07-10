@@ -360,6 +360,28 @@ section{padding:80px 0;}
 .dropzone h3{margin:0 0 6px;font-size:17px;}
 .dropzone p{margin:0 0 18px;color:var(--muted);font-size:14px;}
 .dropzone input{display:none;}
+/* estado "arquivo recebido" — antes disso, a caixa ficava visualmente
+   idêntica ao estado vazio (mesmo ícone, mesma cor), então dava a
+   impressão de que o upload não tinha funcionado. Agora: borda sólida
+   verde, fundo levemente tingido, e o ícone de seta vira uma miniatura
+   real da foto enviada com um selo de check por cima. */
+.dropzone.has-file{border-style:solid;border-color:var(--green);background:var(--green-soft);}
+.dz-icon-wrap{position:relative;width:34px;height:34px;margin:0 auto 16px;}
+.dz-icon-wrap svg{margin:0;}
+.dz-preview-img{
+  width:100%;height:100%;border-radius:50%;object-fit:cover;
+  border:2px solid var(--green);display:none;
+}
+.dropzone.has-file .dz-upload-icon{display:none;}
+.dropzone.has-file .dz-preview-img{display:block;}
+.dz-check-badge{
+  position:absolute;bottom:-3px;right:-6px;width:18px;height:18px;border-radius:50%;
+  background:var(--green);display:none;align-items:center;justify-content:center;
+  border:2px solid var(--bg-alt);
+}
+.dropzone.has-file .dz-check-badge{display:flex;}
+.dz-check-badge svg{width:10px;height:10px;color:#04140c;margin:0;}
+.hero-dropzone.has-file h3{color:var(--green);}
 .upload-preview{display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap;}
 .upload-thumb{width:90px;height:90px;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#000;}
 .upload-thumb svg{width:100%;height:100%;}
@@ -810,12 +832,16 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
       <div class="hero-card">
         <div class="dropzone hero-dropzone" id="heroDropzone">
           <input type="file" id="heroFileInput" accept="image/*">
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 16V4M12 4L7 9M12 4L17 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <div class="dz-icon-wrap">
+            <svg class="dz-upload-icon" width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 16V4M12 4L7 9M12 4L17 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <img class="dz-preview-img" id="dzPreviewImg" alt="Prévia da selfie enviada">
+            <span class="dz-check-badge"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
           <h3>Arraste sua selfie aqui</h3>
           <p>ou clique para escolher um arquivo — JPG ou PNG</p>
           <button type="button" class="btn btn-ghost" id="heroPickFileBtn">Escolher arquivo</button>
         </div>
-        <button type="button" class="btn btn-primary btn-block" id="heroGenerateBtn" style="margin-top:18px;">Gerar minha foto grátis</button>
+        <button type="button" class="btn btn-primary btn-block" id="heroGenerateBtn" style="margin-top:18px;" disabled>Gerar minha foto grátis</button>
       </div>
     </div>
 
@@ -1652,13 +1678,29 @@ function fillLoopTrack(track, buildOneCopyHtml){
   var heroFileObj = null;
   var heroDefaultTitle = 'Arraste sua selfie aqui';
   var heroDefaultSub = 'ou clique para escolher um arquivo — JPG ou PNG';
+  var dzPreviewImg = document.getElementById('dzPreviewImg');
+  var dzPreviewUrl = null; // object URL da prévia atual, revogado ao trocar/limpar
 
+  // ---------------------------------------------------------------------
+  // Antes, o único sinal de que o upload funcionou era o texto do título
+  // mudar pra "Selfie recebida" — fácil de não notar. Agora a caixa muda
+  // de cor (borda + fundo verdes), mostra uma miniatura real da foto
+  // enviada com um selo de check, e o botão "Gerar minha foto grátis"
+  // fica desabilitado até existir um arquivo válido.
+  // ---------------------------------------------------------------------
   function handleHeroFile(name, file){
     heroFileName = name || 'selfie.jpg';
     if(file) heroFileObj = file;
     heroDropzone.querySelector('h3').textContent = 'Selfie recebida';
     heroDropzone.querySelector('p').textContent = heroFileName;
     heroPickFileBtn.textContent = 'Trocar arquivo';
+    heroDropzone.classList.add('has-file');
+    heroGenerateBtn.disabled = false;
+    if(dzPreviewUrl) URL.revokeObjectURL(dzPreviewUrl);
+    if(file){
+      dzPreviewUrl = URL.createObjectURL(file);
+      dzPreviewImg.src = dzPreviewUrl;
+    }
   }
   function resetHeroDropzone(){
     heroFileName = null;
@@ -1667,6 +1709,10 @@ function fillLoopTrack(track, buildOneCopyHtml){
     heroDropzone.querySelector('h3').textContent = heroDefaultTitle;
     heroDropzone.querySelector('p').textContent = heroDefaultSub;
     heroPickFileBtn.textContent = 'Escolher arquivo';
+    heroDropzone.classList.remove('has-file');
+    heroGenerateBtn.disabled = true;
+    if(dzPreviewUrl){ URL.revokeObjectURL(dzPreviewUrl); dzPreviewUrl = null; }
+    dzPreviewImg.removeAttribute('src');
   }
 
   heroPickFileBtn.addEventListener('click', function(e){ e.stopPropagation(); heroFileInput.click(); });
