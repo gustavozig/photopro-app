@@ -619,9 +619,16 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .result-frame.locked.has-real-preview .result-img{filter:none;}
 .result-frame.has-real-preview .result-img img{width:100%;display:block;}
 .generating-state{max-width:320px;margin:10px auto 0;text-align:center;padding:34px 20px;}
+/* leve escurecida sobre a prévia bloqueada — reforça a sensação intuitiva de
+   "trancado" sem exagerar, sutil o suficiente pra não brigar com o brilho da imagem. */
+.result-frame.locked::after{
+  content:'';position:absolute;inset:0;background:rgba(0,0,0,.22);
+  pointer-events:none;z-index:1;
+}
+.result-frame.unlocked::after{display:none;}
 .watermark{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  pointer-events:none;
+  pointer-events:none;z-index:2;
 }
 .watermark span{
   font-size:15px;font-weight:800;letter-spacing:.35em;color:rgba(255,255,255,.85);
@@ -635,12 +642,13 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .preview-pending-note{
   position:absolute;bottom:10px;left:0;right:0;text-align:center;
   font-size:11px;color:rgba(255,255,255,.75);letter-spacing:.02em;
-  display:none;
+  display:none;z-index:2;
 }
 .result-frame.preview-loading .preview-pending-note{display:block;}
 .lock-chip{
   position:absolute;top:12px;left:12px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);
   padding:5px 11px;border-radius:999px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;
+  z-index:2;
 }
 .result-frame.unlocked .lock-chip{background:var(--green);color:#04140c;border-color:var(--green);}
 
