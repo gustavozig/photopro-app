@@ -1689,7 +1689,9 @@ function fillLoopTrack(track, buildOneCopyHtml){
 (function(){
   var panels = document.querySelectorAll('.app-panel');
   var pills = document.querySelectorAll('.step-pill');
+  var activeStep = 1;
   function goTo(step){
+    activeStep = step;
     panels.forEach(function(p){ p.classList.toggle('visible', p.dataset.panel == step); });
     pills.forEach(function(p, i){
       p.classList.toggle('active', (i+1) == step);
@@ -1928,6 +1930,8 @@ function fillLoopTrack(track, buildOneCopyHtml){
   var orderReady = false;
   var orderFailed = false;
   var orderFailMessage = '';
+  var currentOrderController = null;
+  var orderRequestStartedAt = 0;
 
   function setBlur(pct){
     var blur = Math.round((16 - (pct/100)*16) * 10) / 10;
@@ -2029,9 +2033,27 @@ function fillLoopTrack(track, buildOneCopyHtml){
     formData.append('selfie', heroFileObj);
     formData.append('style', selectedStyleName || 'Corporativo neutro');
 
-    fetch('/api/orders', { method: 'POST', body: formData })
+    // Timeout de segurança pro upload da selfie: se a tela do celular apagar
+    // (ou o navegador suspender a aba) enquanto este fetch está pendente,
+    // alguns navegadores mobile deixam a requisição pendurada pra sempre —
+    // a promise nunca resolve nem rejeita quando o usuário volta, travando a
+    // tela de "gerando..." mesmo depois da barra de progresso (que é só
+    // teatro visual baseado em tempo) já ter chegado a 100%. O
+    // AbortController garante que a requisição sempre resolve OU rejeita
+    // dentro de um tempo razoável, deixando o fluxo de erro/retry (abaixo)
+    // assumir em vez de travar pra sempre. O listener de visibilitychange
+    // logo depois desta função cobre o mesmo cenário de forma ainda mais
+    // rápida, tentando de novo assim que o usuário volta pro app.
+    var controller = new AbortController();
+    currentOrderController = controller;
+    orderRequestStartedAt = Date.now();
+    var timeoutId = setTimeout(function(){ controller.abort(); }, 45000);
+
+    fetch('/api/orders', { method: 'POST', body: formData, signal: controller.signal })
       .then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
       .then(function(res){
+        clearTimeout(timeoutId);
+        if(controller !== currentOrderController) return; // uma tentativa mais nova já assumiu
         if(!res.ok || !res.data.orderId){
           orderFailed = true;
           orderFailMessage = res.data.error || 'Não foi possível validar sua selfie.';
@@ -2043,10 +2065,31 @@ function fillLoopTrack(track, buildOneCopyHtml){
         pollPreviewStatus(currentOrderId);
       })
       .catch(function(){
+        clearTimeout(timeoutId);
+        if(controller !== currentOrderController) return; // uma tentativa mais nova já assumiu
         orderFailed = true;
         orderFailMessage = 'Erro ao enviar sua selfie. Verifique sua conexão e tente novamente.';
       });
   }
+
+  // ---- recuperação automática ao voltar de tela apagada/segundo plano ----
+  // Se o celular apagou a tela (ou o app foi pro background) bem no meio do
+  // upload da selfie, o fetch acima pode ficar pendurado sem nunca resolver
+  // — sem isto, o usuário volta, vê a barra em 100% e a tela simplesmente
+  // não avança (o check() de waitForGenerationThenReveal fica esperando um
+  // orderReady que nunca chega). Ao detectar que o app voltou a ficar
+  // visível ainda no passo 3, sem sucesso nem erro registrado, e já se
+  // passou tempo suficiente pra um upload normal ter terminado, tentamos de
+  // novo automaticamente — sem exigir nenhuma ação do usuário.
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState !== 'visible') return;
+    if(activeStep !== 3) return;
+    if(orderReady || orderFailed) return;
+    if(!orderRequestStartedAt) return;
+    if(Date.now() - orderRequestStartedAt > 8000){
+      startRealGeneration();
+    }
+  });
 
   // ---- prévia real (barata, borrada + marca d'água) ----
   // Faz polling de GET /orders/:id só até a prévia ficar pronta (ou falhar).
