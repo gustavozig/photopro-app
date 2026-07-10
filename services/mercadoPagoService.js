@@ -2,6 +2,12 @@ const crypto = require('crypto');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 
 const PRICE_BRL = Number(process.env.PRICE_BRL || 9.9);
+// Order bump "Pacote Premium" — desbloqueia os outros 11 estilos do
+// catálogo (ver prompts.js) por um adicional fixo. O valor cobrado é
+// SEMPRE calculado aqui no servidor a partir do flag booleano `bump`
+// vindo do front-end — nunca confiamos num valor de preço enviado pelo
+// cliente, pra não abrir brecha de manipulação do total pago.
+const BUMP_PRICE_BRL = Number(process.env.BUMP_PRICE_BRL || 9.9);
 
 let _client = null;
 function getClient() {
@@ -82,9 +88,38 @@ async function createDirectPayment(order, formData, publicUrl) {
     throw err;
   }
 
+  // Order bump "Pacote Premium": o total cobrado é calculado 100% aqui —
+  // `formData.bump` é só um booleano ("o cliente marcou a caixinha?"), nunca
+  // um valor em R$. Ver BUMP_PRICE_BRL no topo do arquivo.
+  const bumpSelected = formData.bump === true;
+  const transactionAmount = bumpSelected ? PRICE_BRL + BUMP_PRICE_BRL : PRICE_BRL;
+
+  const items = [
+    {
+      id: order.id,
+      title: 'PhotoPRO — Foto profissional gerada por IA',
+      description: `Foto profissional gerada por IA no estilo ${order.style}`,
+      category_id: 'services',
+      quantity: 1,
+      unit_price: PRICE_BRL,
+    },
+  ];
+  if (bumpSelected) {
+    items.push({
+      id: `${order.id}-bump`,
+      title: 'PhotoPRO — Pacote Premium (11 estilos adicionais)',
+      description: 'Desbloqueio das outras 11 variações de estilo geradas por IA',
+      category_id: 'services',
+      quantity: 1,
+      unit_price: BUMP_PRICE_BRL,
+    });
+  }
+
   const body = {
-    transaction_amount: PRICE_BRL,
-    description: `PhotoPRO — Foto profissional (${order.style})`,
+    transaction_amount: transactionAmount,
+    description: bumpSelected
+      ? `PhotoPRO — Foto profissional (${order.style}) + Pacote Premium`
+      : `PhotoPRO — Foto profissional (${order.style})`,
     payment_method_id: formData.payment_method_id,
     payer: formData.payer,
     external_reference: order.id,
@@ -97,16 +132,7 @@ async function createDirectPayment(order, formData, publicUrl) {
     // pagamentos"). Ver:
     // https://www.mercadopago.com.br/developers/pt/docs/checkout-api-orders/payment-management/improve-payment-approval/recommendations
     additional_info: {
-      items: [
-        {
-          id: order.id,
-          title: 'PhotoPRO — Foto profissional gerada por IA',
-          description: `Foto profissional gerada por IA no estilo ${order.style}`,
-          category_id: 'services',
-          quantity: 1,
-          unit_price: PRICE_BRL,
-        },
-      ],
+      items,
       payer: {
         first_name: formData.payer?.first_name || undefined,
         last_name: formData.payer?.last_name || undefined,
@@ -158,6 +184,11 @@ async function createDirectPayment(order, formData, publicUrl) {
     status: result.status,
     statusDetail: result.status_detail,
     paymentMethodId: result.payment_method_id,
+    // devolvido pro caller (routes/orders.js) persistir order.bumpPurchased
+    // só depois que o pagamento foi de fato criado com esse valor — nunca
+    // marcamos o bump como comprado antes de confirmar que a MP aceitou.
+    bumpPurchased: bumpSelected,
+    amount: transactionAmount,
   };
 
   const txData = result.point_of_interaction?.transaction_data;
@@ -206,4 +237,5 @@ module.exports = {
   getPayment,
   verifyWebhookSignature,
   PRICE_BRL,
+  BUMP_PRICE_BRL,
 };
