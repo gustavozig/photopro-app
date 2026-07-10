@@ -90,6 +90,28 @@ async function createDirectPayment(order, formData, publicUrl) {
     external_reference: order.id,
     notification_url: `${publicUrl}/api/webhooks/mercadopago`,
     statement_descriptor: 'PHOTOPRO',
+    // additional_info: enriquece o pagamento com dados do item e do
+    // comprador — o antifraude da MP usa isso pra reduzir recusas
+    // indevidas de pagamentos legítimos, e é um dos fatores avaliados em
+    // "Qualidade da integração" (painel MP > seção "Aprovação dos
+    // pagamentos"). Ver:
+    // https://www.mercadopago.com.br/developers/pt/docs/checkout-api-orders/payment-management/improve-payment-approval/recommendations
+    additional_info: {
+      items: [
+        {
+          id: order.id,
+          title: 'PhotoPRO — Foto profissional gerada por IA',
+          description: `Foto profissional gerada por IA no estilo ${order.style}`,
+          category_id: 'services',
+          quantity: 1,
+          unit_price: PRICE_BRL,
+        },
+      ],
+      payer: {
+        first_name: formData.payer?.first_name || undefined,
+        last_name: formData.payer?.last_name || undefined,
+      },
+    },
   };
   if (formData.token) body.token = formData.token;
   if (formData.installments) body.installments = formData.installments;
@@ -99,7 +121,15 @@ async function createDirectPayment(order, formData, publicUrl) {
   try {
     result = await payment.create({
       body,
-      requestOptions: { idempotencyKey: `${order.id}-${Date.now()}` },
+      requestOptions: {
+        idempotencyKey: `${order.id}-${Date.now()}`,
+        // Device ID coletado no front-end via script de segurança da MP
+        // (window.MP_DEVICE_SESSION_ID, ver public/index.html) — enviado
+        // como header X-Meli-Session-Id. Também conta pra qualidade da
+        // integração ("Obter e enviar o Device ID" nas recomendações
+        // oficiais de aprovação de pagamentos da MP).
+        ...(formData.deviceId ? { meliSessionId: formData.deviceId } : {}),
+      },
     });
   } catch (mpErr) {
     // O SDK da MP joga um erro cuja causa real (o motivo da recusa/erro de
