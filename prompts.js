@@ -8,6 +8,14 @@ This is a photo EDIT, not a new generation: you are taking the exact person in t
 attached selfie and changing only their clothing, background, and lighting — treat the
 face itself as a fixed element being composited into a new scene, not something to redraw
 from scratch.
+IMPORTANT distinction — identity vs. framing: preserve the person's FACE with maximum
+fidelity (see below), but do NOT preserve the CAMERA FRAMING of the input photo. The input
+is typically a close-up selfie taken at arm's length (face filling almost the entire
+frame, little to no shoulders visible, top of the head often cropped off). The output must
+use a completely different, wider framing — see the "Framing" section below. Do not simply
+lightly crop, upscale, or zoom out slightly from the selfie as it is; recompose the shot
+entirely, as if a photographer stepped back a few meters and reshot this person with a
+proper camera and studio setup, keeping only the face/identity anchored to the original.
 CRITICAL — identity preservation (do not violate):
 - Keep the exact same person: same face shape, same eyes and eye spacing, same eyebrow
   shape, same nose, same mouth and lip shape, same jawline and chin, same ears, same skin
