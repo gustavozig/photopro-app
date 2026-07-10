@@ -96,7 +96,7 @@ async function runGenerationInBackground(orderId) {
       status: 'paid',
       fullImageBuffer,
       // selfieBuffer só é apagado depois — se o cliente comprou o Pacote
-      // Premium, ainda precisamos dela pra gerar os outros 11 estilos (ver
+      // Premium, ainda precisamos dela pra gerar os outros 4 estilos (ver
       // runBumpGenerationInBackground abaixo). Se não comprou, apagamos já.
     });
   } catch (err) {
@@ -120,7 +120,7 @@ async function runGenerationInBackground(orderId) {
 }
 
 // ---------------------------------------------------------------------------
-// Order bump "Pacote Premium": gera as outras 11 variações de estilo (todo o
+// Order bump "Pacote Premium": gera as outras 4 variações de estilo (todo o
 // catálogo de prompts.js exceto o estilo já escolhido no fluxo base) e
 // entrega como uma galeria adicional. Roda DEPOIS que a foto principal já
 // está pronta (o cliente não fica esperando o pacote inteiro pra ver o
@@ -128,7 +128,7 @@ async function runGenerationInBackground(orderId) {
 // separadamente (ver GET /api/orders/:id).
 //
 // Usa um pool de concorrência limitada (não Promise.all direto) pra não
-// disparar 11 chamadas simultâneas à API da OpenAI de uma vez — reduz risco
+// disparar 4 chamadas simultâneas à API da OpenAI de uma vez — reduz risco
 // de rate limit e picos de memória. Falhas individuais não derrubam o
 // pacote inteiro: entregamos o que conseguimos gerar (Promise.allSettled-like).
 // ---------------------------------------------------------------------------
@@ -158,7 +158,7 @@ async function runBumpGenerationInBackground(orderId) {
 
   orderStore.updateOrder(orderId, { bumpStatus: 'generating' });
 
-  const otherStyles = getOtherStyles(order.style); // os outros 11 estilos do catálogo
+  const otherStyles = getOtherStyles(order.style); // os outros 4 estilos do catálogo
   const results = await mapWithConcurrency(otherStyles, BUMP_CONCURRENCY, async (styleName) => {
     const imageBuffer = await openaiService.generateProfessionalPhoto(
       order.selfieBuffer,
