@@ -57,6 +57,14 @@ async function generateProfessionalPhoto(selfieBuffer, selfieMimeType, styleName
         prompt,
         size: '1024x1024',
         quality: 'medium',
+        // input_fidelity:'high' é o parâmetro oficial da OpenAI pra preservação
+        // de identidade em edição de imagem (rostos, logos) — sem ele, o
+        // modelo roda no modo padrão, que prioriza seguir o prompt em vez de
+        // manter fielmente as feições da pessoa na selfie original. Custa
+        // mais tokens de imagem de entrada (~+$0,03 por foto no tier medium),
+        // mas só é aplicado aqui — na geração final PAGA — nunca na prévia
+        // gratuita, pra não dobrar o custo de quem ainda não converteu.
+        input_fidelity: 'high',
       });
       const b64 = result.data[0].b64_json;
       return Buffer.from(b64, 'base64');
