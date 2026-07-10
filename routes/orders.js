@@ -14,6 +14,26 @@ const upload = multer({
   limits: { fileSize: 8 * 1024 * 1024 }, // 8MB
 });
 
+// ---------------------------------------------------------------------------
+// Extrai _fbp/_fbc (cookies do Meta Pixel) do header Cookie cru — sem
+// dependência de cookie-parser só por causa disso. _fbp é setado pelo pixel
+// em qualquer visita; _fbc só existe se o clique veio de um anúncio do Meta
+// (tem o fbclid embutido). Usados no Meta CAPI (ver services/metaCapiService.js)
+// pra melhorar a qualidade de correspondência do evento Purchase.
+// ---------------------------------------------------------------------------
+function readCookie(req, name) {
+  const header = req.headers.cookie;
+  if (!header) return null;
+  const match = header.split(';').map((c) => c.trim()).find((c) => c.startsWith(name + '='));
+  return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : null;
+}
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return req.socket?.remoteAddress || null;
+}
+
 function serializeOrder(order) {
   const out = {
     id: order.id,
@@ -79,6 +99,10 @@ router.post('/orders', upload.single('selfie'), async (req, res) => {
       style,
       selfieBuffer: req.file.buffer,
       selfieMimeType: req.file.mimetype,
+      fbp: readCookie(req, '_fbp'),
+      fbc: readCookie(req, '_fbc'),
+      clientIp: getClientIp(req),
+      userAgent: req.headers['user-agent'] || null,
     });
 
     res.json({ orderId: order.id, status: order.status });

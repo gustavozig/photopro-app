@@ -3,6 +3,7 @@ const express = require('express');
 const orderStore = require('../services/orderStore');
 const mercadoPagoService = require('../services/mercadoPagoService');
 const openaiService = require('../services/openaiService');
+const metaCapiService = require('../services/metaCapiService');
 
 const router = express.Router();
 
@@ -46,6 +47,21 @@ router.post('/webhooks/mercadopago', async (req, res) => {
         orderStore.updateOrder(order.id, { status: 'generating', paymentId });
         res.status(200).end();
         runGenerationInBackground(order.id);
+        // Evento Purchase pro Meta CAPI — fire-and-forget, nunca bloqueia a
+        // resposta do webhook nem a geração da foto (ver metaCapiService.js).
+        // event_id usa o mesmo formato disparado pelo pixel no navegador
+        // (index.html, dentro de pollUntilPaid) pra o Meta deduplicar.
+        const publicUrl = req.app.get('publicUrl');
+        metaCapiService.sendPurchaseEvent({
+          orderId: order.id,
+          value: mercadoPagoService.PRICE_BRL,
+          email: payment.payer?.email || null,
+          clientIp: order.clientIp,
+          userAgent: order.userAgent,
+          fbp: order.fbp,
+          fbc: order.fbc,
+          sourceUrl: publicUrl,
+        });
         return;
       }
       return res.status(200).end();
