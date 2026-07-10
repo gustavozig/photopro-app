@@ -408,8 +408,9 @@ section{padding:80px 0;}
 .swatch-layer{position:absolute;inset:0;}
 .swatch-layer.is-b{opacity:0;animation:swatchCrossfade 9s ease-in-out infinite;}
 @keyframes swatchCrossfade{0%,42%{opacity:0;}50%,92%{opacity:1;}100%{opacity:0;}}
-.style-card h4{font-size:13px;margin:0 0 2px;}
-.style-card span{font-size:11px;color:var(--muted-2);}
+.style-card h4{font-size:13.5px;margin:0;font-weight:700;}
+.style-card-info{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);text-align:left;}
+.style-card .style-desc{font-size:11.5px;color:var(--muted-2);line-height:1.42;margin:4px 0 0;}
 .panel-actions{display:flex;justify-content:center;gap:12px;margin-top:28px;}
 
 /* loading */
@@ -450,6 +451,19 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .quality-thumb-row{display:flex;align-items:center;gap:16px;margin-bottom:26px;}
 .quality-thumb{width:60px;height:60px;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#000;flex-shrink:0;}
 .quality-thumb svg{width:100%;height:100%;}
+.quality-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+@keyframes qualityFadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+@keyframes qualityPop{from{opacity:0;transform:scale(.5);}to{opacity:1;transform:scale(1);}}
+.app-panel.visible[data-panel="1"] .quality-thumb{animation:qualityFadeIn .45s ease backwards;}
+.app-panel.visible[data-panel="1"] .quality-tip{animation:qualityFadeIn .4s ease backwards;}
+.app-panel.visible[data-panel="1"] .quality-tip:nth-child(1){animation-delay:.08s;}
+.app-panel.visible[data-panel="1"] .quality-tip:nth-child(2){animation-delay:.15s;}
+.app-panel.visible[data-panel="1"] .quality-tip:nth-child(3){animation-delay:.22s;}
+.app-panel.visible[data-panel="1"] .quality-tip:nth-child(4){animation-delay:.29s;}
+.app-panel.visible[data-panel="1"] .quality-tip:nth-child(1) .tip-mark{animation:qualityPop .3s ease backwards;animation-delay:.24s;}
+.app-panel.visible[data-panel="1"] .quality-tip:nth-child(2) .tip-mark{animation:qualityPop .3s ease backwards;animation-delay:.31s;}
+.app-panel.visible[data-panel="1"] .quality-tip:nth-child(3) .tip-mark{animation:qualityPop .3s ease backwards;animation-delay:.38s;}
+.app-panel.visible[data-panel="1"] .quality-tip:nth-child(4) .tip-mark{animation:qualityPop .3s ease backwards;animation-delay:.45s;}
 .quality-filename{font-weight:700;font-size:14px;}
 .quality-sub{font-size:12px;color:var(--muted-2);}
 .quality-tips{display:flex;flex-direction:column;gap:10px;}
@@ -475,9 +489,13 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .friction-trust-badge{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--green);background:var(--green-soft);border:1px solid rgba(47,227,139,.25);padding:6px 12px;border-radius:99px;}
 .friction-trust-badge svg{flex-shrink:0;}
 .friction-preview{position:relative;width:132px;height:132px;margin:0 auto 34px;}
-.friction-preview-img{width:100%;height:100%;border-radius:50%;overflow:hidden;border:2px solid var(--border);background:#000;}
+.friction-preview-img{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;border:2px solid var(--border);background:#101413;}
 .friction-preview-img svg{width:100%;height:100%;}
-.friction-preview-img img{width:100%;height:100%;object-fit:cover;}
+.friction-preview-img img{width:100%;height:100%;object-fit:cover;display:block;filter:blur(16px);transition:filter .4s ease;}
+.friction-scan{position:absolute;left:0;right:0;height:34%;top:-40%;pointer-events:none;mix-blend-mode:screen;
+  background:linear-gradient(180deg, rgba(47,227,139,0) 0%, rgba(47,227,139,.6) 50%, rgba(47,227,139,0) 100%);
+  filter:blur(1px);animation:frictionScanSweep 2.6s cubic-bezier(.45,0,.55,1) infinite;}
+@keyframes frictionScanSweep{0%{top:-40%;}100%{top:106%;}}
 .friction-preview-ring{position:absolute;inset:-9px;width:150px;height:150px;}
 .friction-preview-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
 .friction-preview-ring .ring-bg{fill:none;stroke:var(--border);stroke-width:3;}
@@ -846,7 +864,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
 <body>
 
 <header>
-  <div class="nav wrap" style="justify-content:center;">
+  <div class="nav wrap" style="justify-content:flex-end;">
     <div class="logo">
       <svg class="icon" width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="2" y="5" width="20" height="15" rx="3" stroke="#2fe38b" stroke-width="1.7"/>
@@ -867,7 +885,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
       </span>
     </div>
     <h1 class="h1">Sua selfie vira uma<br><span class="grad">foto profissional</span> em minutos</h1>
-    <p class="sub">Esqueça os custos de um fotógrafo. Envie uma foto comum e receba uma imagem de estúdio pronta para alavancar sua carreira.</p>
+    <p class="sub">Preserve seus traços únicos e crie fotos profissionais sem custos de um fotógrafo e sem sair de casa.</p>
 
     <div class="hero-card-wrap">
       <div class="float-icon i1" title="Roupa social">
@@ -907,7 +925,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
     <div class="example-carousel-wrap">
       <div class="hero-phone-label">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        Exemplos de resultado por estilo
+        Exemplos de resultados autorizados pelos usuários!
       </div>
       <div class="example-track-viewport">
         <div class="example-track" id="exampleTrack"></div>
@@ -1163,28 +1181,40 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
               <img src="/images/exemplos/executivo-1-depois.webp" alt="Exemplo estilo Executivo(a)" loading="lazy">
               <div class="swatch-layer is-b" style="animation-delay:0s;"><img src="/images/exemplos/executivo-2-depois.webp" alt="Exemplo estilo Executivo(a) — variação" loading="lazy"></div>
             </div>
-            <h4>Executivo(a)</h4><span>Terno + fundo escritório</span>
+            <div class="style-card-info">
+              <h4>Executivo(a)</h4>
+              <p class="style-desc">Terno e fundo de escritório — ideal para cargos de liderança.</p>
+            </div>
           </div>
           <div class="style-card" data-style="Corporativo neutro">
             <div class="style-swatch">
               <img src="/images/exemplos/corporativo-1-depois.webp" alt="Exemplo estilo Corporativo neutro" loading="lazy">
               <div class="swatch-layer is-b" style="animation-delay:2.25s;"><img src="/images/exemplos/corporativo-2-depois.webp" alt="Exemplo estilo Corporativo neutro — variação" loading="lazy"></div>
             </div>
-            <h4>Corporativo neutro</h4><span>Fundo cinza liso</span>
+            <div class="style-card-info">
+              <h4>Corporativo neutro</h4>
+              <p class="style-desc">Fundo cinza liso — visual clássico para qualquer área.</p>
+            </div>
           </div>
           <div class="style-card" data-style="Casual elegante">
             <div class="style-swatch">
               <img src="/images/exemplos/casual-1-depois.webp" alt="Exemplo estilo Casual elegante" loading="lazy">
               <div class="swatch-layer is-b" style="animation-delay:4.5s;"><img src="/images/exemplos/casual-2-depois.webp" alt="Exemplo estilo Casual elegante — variação" loading="lazy"></div>
             </div>
-            <h4>Casual elegante</h4><span>Sem gravata, tom leve</span>
+            <div class="style-card-info">
+              <h4>Casual elegante</h4>
+              <p class="style-desc">Sem gravata, tom leve — para um ar mais acessível.</p>
+            </div>
           </div>
           <div class="style-card" data-style="Fundo estúdio">
             <div class="style-swatch">
               <img src="/images/exemplos/estudio-1-depois.webp" alt="Exemplo estilo Fundo estúdio" loading="lazy">
               <div class="swatch-layer is-b" style="animation-delay:6.75s;"><img src="/images/exemplos/estudio-2-depois.webp" alt="Exemplo estilo Fundo estúdio — variação" loading="lazy"></div>
             </div>
-            <h4>Fundo estúdio</h4><span>Fundo infinito neutro</span>
+            <div class="style-card-info">
+              <h4>Fundo estúdio</h4>
+              <p class="style-desc">Fundo infinito neutro — foco total no seu rosto.</p>
+            </div>
           </div>
         </div>
         <div class="panel-actions">
@@ -1208,19 +1238,14 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
               </svg>
             </div>
             <div class="friction-preview-img" id="frictionPreviewImg">
-              <svg viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="frictionGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#26302b"/><stop offset="100%" stop-color="#101413"/></linearGradient></defs>
-                <rect width="300" height="340" fill="url(#frictionGrad)"/>
-                <path d="M55 340C55 230 65 180 150 180C235 180 245 230 245 340Z" fill="#1e2723"/>
-                <path d="M90 340C90 240 95 205 150 205C205 205 210 240 210 340Z" fill="#2fe38b" opacity=".85"/>
-                <circle cx="150" cy="110" r="70" fill="#dcdcd6"/>
-              </svg>
+              <img id="frictionPreviewImgTag" alt="Sua selfie sendo processada">
+              <div class="friction-scan" aria-hidden="true"></div>
             </div>
             <div class="friction-pct" id="frictionPct">0%</div>
           </div>
 
-          <div class="friction-stage-title" id="frictionStageTitle">Analisando sua selfie</div>
-          <div class="friction-stage-sub" id="frictionStageSub">Detectando os pontos do seu rosto para preservar sua identidade</div>
+          <div class="friction-stage-title" id="frictionStageTitle">Aprendendo seu rosto</div>
+          <div class="friction-stage-sub" id="frictionStageSub">Notando os detalhes e traços que só você tem</div>
 
           <div class="friction-checklist" id="frictionChecklist"></div>
 
@@ -1745,7 +1770,11 @@ function fillLoopTrack(track, buildOneCopyHtml){
   var qualityThumb = document.getElementById('qualityThumb');
   var qualityFileName = document.getElementById('qualityFileName');
   function fillQualityCheck(name){
-    qualityThumb.innerHTML = silhouetteSvg;
+    if(dzPreviewUrl){
+      qualityThumb.innerHTML = '<img src="' + dzPreviewUrl + '" alt="Sua selfie enviada">';
+    } else {
+      qualityThumb.innerHTML = silhouetteSvg;
+    }
     qualityFileName.textContent = name || 'selfie.jpg';
   }
   document.getElementById('toStep2FromQuality').addEventListener('click', function(){ goTo(2); });
@@ -1859,6 +1888,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
   var frictionStageTitle = document.getElementById('frictionStageTitle');
   var frictionStageSub = document.getElementById('frictionStageSub');
   var frictionPreviewImg = document.getElementById('frictionPreviewImg');
+  var frictionPreviewImgTag = document.getElementById('frictionPreviewImgTag');
   var frictionFactText = document.getElementById('frictionFactText');
   var frictionSocialText = document.getElementById('frictionSocialText');
   var frictionWarning = document.getElementById('frictionWarning');
@@ -1884,22 +1914,22 @@ function fillLoopTrack(track, buildOneCopyHtml){
 
   // 8 stages, ~4m12s total — a deliberadamente vagarosa construção de percepção de valor
   var stages = [
-    { title:'Analisando sua selfie', sub:'Detectando os pontos do seu rosto para preservar sua identidade', dur:28000,
-      items:['Detectando pontos e proporções do rosto','Calculando simetria facial','Preservando sua identidade original'] },
-    { title:'Aplicando roupa social', sub:'Vestindo você com terno ou blazer de forma realista', dur:32000,
-      items:['Ajustando caimento do tecido','Adaptando cor ao tom de pele','Alinhando ombros e colarinho'] },
-    { title:'Ajustando iluminação de estúdio', sub:'Corrigindo sombras para um resultado com aparência profissional', dur:34000,
-      items:['Equalizando exposição do rosto','Suavizando sombras duras','Adicionando luz de preenchimento'] },
-    { title:'Trocando o fundo', sub:'Substituindo o fundo pelo estilo escolhido', dur:30000,
-      items:['Recortando contorno com precisão','Aplicando fundo do estilo selecionado','Ajustando profundidade de campo'] },
-    { title:'Sincronizando tom de pele', sub:'Deixando a pele com aparência natural de estúdio', dur:34000,
-      items:['Equilibrando tom de pele','Suavizando textura sem perder realismo','Corrigindo brilho e reflexos'] },
-    { title:'Removendo ruídos e imperfeições', sub:'Refinando pequenos detalhes da imagem', dur:30000,
-      items:['Reduzindo ruído digital','Corrigindo pixels fora do padrão','Aplicando nitidez seletiva no rosto'] },
-    { title:'Renderizando em alta resolução', sub:'Preparando a imagem em alta definição para telas e impressão', dur:36000,
-      items:['Renderizando camadas finais','Otimizando compressão sem perda de qualidade','Gerando arquivo em alta resolução'] },
-    { title:'Aplicando retoques finais', sub:'Últimos ajustes antes da entrega', dur:28000,
-      items:['Conferindo simetria final','Aplicando toque profissional de estúdio','Validando qualidade de entrega'] }
+    { title:'Aprendendo seu rosto', sub:'Notando os detalhes e traços que só você tem', dur:28000,
+      items:['Identificando seus pontos únicos','Entendendo a simetria do seu rosto','Preservando exatamente quem você é'] },
+    { title:'Montando seu visual social', sub:'Vestindo você com terno ou blazer sem perder sua identidade', dur:32000,
+      items:['Ajustando o caimento ao seu corpo','Combinando a cor com seu tom de pele','Alinhando ombros e colarinho'] },
+    { title:'Iluminando como em estúdio', sub:'Criando a luz que valoriza os seus traços', dur:34000,
+      items:['Equalizando a luz no seu rosto','Suavizando sombras duras','Adicionando um toque de luz profissional'] },
+    { title:'Compondo o cenário perfeito', sub:'Substituindo o fundo pelo estilo escolhido', dur:30000,
+      items:['Recortando seu contorno com precisão','Aplicando o fundo do estilo selecionado','Ajustando a profundidade da cena'] },
+    { title:'Refinando o tom da sua pele', sub:'Deixando sua pele com aparência natural de estúdio', dur:34000,
+      items:['Equilibrando o tom de pele','Suavizando sem perder o realismo','Corrigindo brilho e reflexos'] },
+    { title:'Cuidando dos pequenos detalhes', sub:'Pequenos ajustes finos fazem toda a diferença', dur:30000,
+      items:['Reduzindo ruído da imagem','Corrigindo pequenas imperfeições','Aplicando nitidez no seu rosto'] },
+    { title:'Preparando sua imagem final', sub:'Deixando tudo pronto em alta definição', dur:36000,
+      items:['Renderizando as camadas finais','Otimizando sem perder qualidade','Gerando o arquivo em alta resolução'] },
+    { title:'Últimos retoques, quase lá', sub:'Garantindo que tudo fique perfeito antes de te entregar', dur:28000,
+      items:['Conferindo a simetria final','Aplicando o toque de estúdio','Validando a qualidade da entrega'] }
   ];
   var TOTAL_DURATION = stages.reduce(function(sum, s){ return sum + s.dur; }, 0);
 
@@ -1938,7 +1968,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     blur = Math.max(blur, 0);
     if(blur === lastBlurValue) return;
     lastBlurValue = blur;
-    frictionPreviewImg.style.filter = 'blur(' + blur.toFixed(1) + 'px)';
+    frictionPreviewImgTag.style.filter = 'blur(' + blur.toFixed(1) + 'px)';
   }
 
   function renderMicroItems(items){
@@ -2248,6 +2278,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
   frictionEngageClose.addEventListener('click', hideEngage);
 
   toStep3.addEventListener('click', function(){
+    if(dzPreviewUrl) frictionPreviewImgTag.src = dzPreviewUrl;
     goTo(3);
     runLoading();
     startRealGeneration();
