@@ -1943,6 +1943,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
         }
         currentOrderId = res.data.orderId;
         orderReady = true;
+        metaTrackCustom('SelfieEnviada', { style: selectedStyleName || 'Corporativo neutro' });
         pollPreviewStatus(currentOrderId);
       })
       .catch(function(){
@@ -1996,6 +1997,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
         var frame = document.getElementById('resultFrame');
         if(frame && !lastPreviewImage) frame.classList.add('preview-loading');
         goTo(4);
+        fireInitiateCheckoutOnce();
       } else if(orderFailed){
         frictionStageTitle.textContent = 'Ops, algo deu errado';
         frictionStageSub.textContent = orderFailMessage || 'Não foi possível continuar agora.';
@@ -2169,6 +2171,64 @@ function fillLoopTrack(track, buildOneCopyHtml){
       mpConfigPromise = fetch('/api/config').then(function(r){ return r.json(); }).catch(function(){ return {}; });
     }
     return mpConfigPromise;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Meta Pixel — carregado dinamicamente com o ID vindo de GET /api/config
+  // (mesmo padrão já usado pra MP_PUBLIC_KEY), pra não deixar o Pixel ID
+  // fixo no HTML estático. Se META_PIXEL_ID não estiver configurado no
+  // servidor, cfg.metaPixelId vem null e o pixel simplesmente não inicializa
+  // — nada quebra. Ver server.js (GET /api/config).
+  //
+  // Eventos disparados neste arquivo:
+  //   - PageView: automático, aqui em initMetaPixel().
+  //   - SelfieEnviada (custom): quando o pedido é criado com sucesso
+  //     (startRealGeneration, logo após orderReady = true).
+  //   - InitiateCheckout: na primeira vez que a tela chega no passo 4
+  //     (waitForGenerationThenReveal), onde fica a caixa de preço/pagamento.
+  //   - Purchase: quando o polling pós-pagamento confirma a foto final
+  //     pronta (pollUntilPaid). Usa eventID igual ao que o servidor manda
+  //     pro Meta CAPI no webhook (routes/webhooks.js) — mesmo formato
+  //     'purchase_' + orderId — pra deduplicar em vez de contar 2x.
+  // ---------------------------------------------------------------------------
+  var metaPixelReady = false;
+  function initMetaPixel(pixelId){
+    if(!pixelId || metaPixelReady) return;
+    metaPixelReady = true;
+    /* eslint-disable */
+    (function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)})(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    /* eslint-enable */
+    window.fbq('init', pixelId);
+    window.fbq('track', 'PageView');
+  }
+  function metaTrackStandard(eventName, params, eventId){
+    if(typeof window.fbq !== 'function') return;
+    window.fbq('track', eventName, params || {}, eventId ? { eventID: eventId } : undefined);
+  }
+  function metaTrackCustom(eventName, params){
+    if(typeof window.fbq !== 'function') return;
+    window.fbq('trackCustom', eventName, params || {});
+  }
+  var sitePriceBRL = 9.90;
+  getMpConfig().then(function(cfg){
+    if(cfg && cfg.priceBRL) sitePriceBRL = cfg.priceBRL;
+    if(cfg && cfg.metaPixelId) initMetaPixel(cfg.metaPixelId);
+  });
+  var checkoutEventFired = false;
+  function fireInitiateCheckoutOnce(){
+    if(checkoutEventFired || !currentOrderId) return;
+    checkoutEventFired = true;
+    metaTrackStandard('InitiateCheckout', { value: sitePriceBRL, currency: 'BRL' }, 'checkout_' + currentOrderId);
+  }
+  var purchaseEventFired = false;
+  function firePurchaseOnce(orderId){
+    if(purchaseEventFired) return;
+    purchaseEventFired = true;
+    metaTrackStandard('Purchase', { value: sitePriceBRL, currency: 'BRL' }, 'purchase_' + orderId);
   }
 
   var mpInstance = null;
@@ -2579,6 +2639,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
             clearInterval(paidPollInterval);
             hideGeneratingState();
             lastFullImage = data.fullImage;
+            firePurchaseOnce(orderId);
             revealPaidResult();
           } else if(data.status === 'generation_failed'){
             clearInterval(paidPollInterval);
@@ -2609,6 +2670,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     currentOrderId = orderId;
     openAppOverlay();
     goTo(4);
+    fireInitiateCheckoutOnce();
 
     if(paymentStatus === 'success'){
       pollUntilPaid(orderId);
