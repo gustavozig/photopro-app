@@ -529,7 +529,7 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .result-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:36px;align-items:center;}
 @media (max-width:860px){.result-grid{grid-template-columns:1fr;}}
 
-/* Pacote Premium (order bump) — galeria das outras 11 fotos, abaixo do
+/* Pacote Premium (order bump) — galeria das outras 4 fotos, abaixo do
    resultado principal */
 .bump-gallery-section{margin-top:36px;padding-top:28px;border-top:1px solid var(--border);}
 .bump-gallery-head{text-align:center;margin-bottom:18px;}
@@ -1307,14 +1307,14 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
           </div>
         </div>
 
-        <!-- Pacote Premium: galeria com as outras 11 fotos, só aparece pra
+        <!-- Pacote Premium: galeria com as outras 4 fotos, só aparece pra
              quem comprou o order bump. Enquanto ainda estão sendo geradas
              (bumpStatus 'generating'), mostra um aviso — a foto principal já
              fica liberada normalmente nesse meio-tempo (ver revealPaidResult). -->
         <div class="bump-gallery-section" id="bumpGallerySection" style="display:none;">
           <div class="bump-gallery-head">
             <h3>🎁 Seu Pacote Premium</h3>
-            <p id="bumpGalleryStatus">Gerando suas outras 11 fotos, só um instante...</p>
+            <p id="bumpGalleryStatus">Gerando suas outras 4 fotos, só um instante...</p>
           </div>
           <div class="bump-gallery-grid" id="bumpGalleryGrid"></div>
         </div>
@@ -1349,11 +1349,12 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
         <strong id="payTotalValue">R$ 19,80</strong>
       </div>
 
-      <!-- Order bump "Pacote Premium": desbloqueia os outros 11 estilos do
-           catálogo por +R$ 9,90. Vem marcado por padrão (id="bumpCard" sem
-           classe "off") — o total já nasce em R$ 19,80 e o preço muda pra
-           R$ 9,90 se o cliente desmarcar. O estado é lido em bumpSelected()
-           na hora de montar o payload do pagamento (ver mais abaixo). -->
+      <!-- Order bump "Pacote Premium": desbloqueia os outros 4 estilos do
+           catálogo (que tem só 5 no total) por +R$ 9,90 — "pacote completo"
+           é literal aqui. Vem marcado por padrão (id="bumpCard" sem classe
+           "off") — o total já nasce em R$ 19,80 e o preço muda pra R$ 9,90
+           se o cliente desmarcar. O estado é lido em bumpSelected() na hora
+           de montar o payload do pagamento (ver mais abaixo). -->
       <div class="bump-card" id="bumpCard">
         <div class="bump-head" id="bumpHead">
           <span class="bump-checkbox" id="bumpCheckbox">
@@ -1364,8 +1365,8 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
         </div>
         <p class="bump-copy">Aproveite esta oferta exclusiva e receba muito mais opções para escolher sua foto perfeita.</p>
         <ul class="bump-benefits">
-          <li><span>✅</span> 12 fotos profissionais em alta resolução</li>
-          <li><span>✅</span> 12 estilos exclusivos</li>
+          <li><span>✅</span> Mais 4 fotos profissionais em alta resolução</li>
+          <li><span>✅</span> Pacote completo com 5 estilos</li>
           <li><span>✅</span> Fundos premium</li>
           <li><span>✅</span> Iluminação profissional</li>
           <li><span>✅</span> Versões prontas para LinkedIn, currículo e WhatsApp</li>
@@ -2768,7 +2769,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     if(genEl) genEl.style.display = 'none';
   }
 
-  // ---- Pacote Premium (order bump): galeria com as outras 11 fotos ----
+  // ---- Pacote Premium (order bump): galeria com as outras 4 fotos ----
   // Roda em paralelo ao pollUntilPaid principal, só pra quem comprou o
   // bump. A foto principal já aparece pro cliente (revealPaidResult) antes
   // dessa galeria terminar de gerar — não faz sentido segurar a entrega do
@@ -2779,7 +2780,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     var statusEl = document.getElementById('bumpGalleryStatus');
     var grid = document.getElementById('bumpGalleryGrid');
     section.style.display = 'block';
-    statusEl.textContent = 'Gerando suas outras 11 fotos, só um instante...';
+    statusEl.textContent = 'Gerando suas outras 4 fotos, só um instante...';
     grid.innerHTML = '<div class="bump-gallery-loading">Isso pode levar um minuto...</div>';
     if(bumpPollInterval) clearInterval(bumpPollInterval);
     var bumpAttempts = 0;
