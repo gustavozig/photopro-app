@@ -1,6 +1,33 @@
 const OpenAI = require('openai');
 const { toFile } = require('openai');
+const sharp = require('sharp');
 const { getPromptForStyle } = require('../prompts');
+
+// ---------------------------------------------------------------------------
+// Formato de entrega da foto FINAL (paga): retrato 4:5 (1080x1350), o padrão
+// de foto de perfil profissional (LinkedIn, currículo, etc.) — não quadrado.
+// A API do gpt-image-1.5 só aceita os tamanhos fixos 1024x1024, 1536x1024 ou
+// 1024x1536 (não aceita 1080x1350 diretamente), então pedimos o retrato mais
+// alto disponível (1024x1536, proporção 2:3) e recortamos no servidor pro
+// 4:5 exato — ver cropTo4x5() abaixo. A prévia gratuita continua quadrada
+// (1024x1024): não faz diferença pra prévia, que é só uma miniatura borrada
+// pra provar que é a foto real do cliente, e simplifica o preview UI.
+// ---------------------------------------------------------------------------
+const FINAL_WIDTH = 1080;
+const FINAL_HEIGHT = 1350; // 4:5
+
+async function cropTo4x5(buffer) {
+  const { width, height } = await sharp(buffer).metadata();
+  const targetRatio = FINAL_WIDTH / FINAL_HEIGHT; // 0.8
+  let cropHeight = Math.round(width / targetRatio);
+  if (cropHeight > height) cropHeight = height; // salvaguarda se a API devolver algo mais baixo que o esperado
+  const top = Math.round((height - cropHeight) / 2); // corta simetricamente topo/base — o rosto já vem centralizado pelo prompt
+  return sharp(buffer)
+    .extract({ left: 0, top, width, height: cropHeight })
+    .resize(FINAL_WIDTH, FINAL_HEIGHT)
+    .png()
+    .toBuffer();
+}
 
 // ---------------------------------------------------------------------------
 // REGRA DE NEGÓCIO: existem DOIS níveis de geração, com custos bem
@@ -55,7 +82,7 @@ async function generateProfessionalPhoto(selfieBuffer, selfieMimeType, styleName
         model: 'gpt-image-1.5',
         image: imageFile,
         prompt,
-        size: '1024x1024',
+        size: '1024x1536', // retrato — ver comentário no topo do arquivo sobre o recorte pra 4:5
         quality: 'medium',
         // input_fidelity:'high' é o parâmetro oficial da OpenAI pra preservação
         // de identidade em edição de imagem (rostos, logos) — sem ele, o
@@ -67,7 +94,8 @@ async function generateProfessionalPhoto(selfieBuffer, selfieMimeType, styleName
         input_fidelity: 'high',
       });
       const b64 = result.data[0].b64_json;
-      return Buffer.from(b64, 'base64');
+      const rawBuffer = Buffer.from(b64, 'base64');
+      return await cropTo4x5(rawBuffer);
     } catch (err) {
       lastError = err;
       console.error(`[openaiService] tentativa ${attempt} falhou:`, err.message || err);
