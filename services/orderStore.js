@@ -33,9 +33,13 @@ const orders = new Map();
  * @property {string|null} error
  * @property {string|null} paymentId
  * @property {number} createdAt
+ * @property {string|null} fbp - cookie _fbp do Meta Pixel, capturado na criação do pedido (usado no Meta CAPI)
+ * @property {string|null} fbc - cookie _fbc do Meta Pixel (só existe se o clique veio de um anúncio)
+ * @property {string|null} clientIp - IP do cliente no momento do pedido (Meta CAPI)
+ * @property {string|null} userAgent - User-Agent do navegador no momento do pedido (Meta CAPI)
  */
 
-function createOrder({ style, selfieBuffer, selfieMimeType }) {
+function createOrder({ style, selfieBuffer, selfieMimeType, fbp, fbc, clientIp, userAgent }) {
   const order = {
     id: uuidv4(),
     style,
@@ -48,6 +52,10 @@ function createOrder({ style, selfieBuffer, selfieMimeType }) {
     error: null,
     paymentId: null,
     createdAt: Date.now(),
+    fbp: fbp || null,
+    fbc: fbc || null,
+    clientIp: clientIp || null,
+    userAgent: userAgent || null,
   };
   orders.set(order.id, order);
   return order;
