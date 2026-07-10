@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 
 const PRICE_BRL = Number(process.env.PRICE_BRL || 9.9);
-// Order bump "Pacote Premium" — desbloqueia os outros 11 estilos do
+// Order bump "Pacote Premium" — desbloqueia os outros 4 estilos do
 // catálogo (ver prompts.js) por um adicional fixo. O valor cobrado é
 // SEMPRE calculado aqui no servidor a partir do flag booleano `bump`
 // vindo do front-end — nunca confiamos num valor de preço enviado pelo
@@ -107,8 +107,8 @@ async function createDirectPayment(order, formData, publicUrl) {
   if (bumpSelected) {
     items.push({
       id: `${order.id}-bump`,
-      title: 'PhotoPRO — Pacote Premium (11 estilos adicionais)',
-      description: 'Desbloqueio das outras 11 variações de estilo geradas por IA',
+      title: 'PhotoPRO — Pacote Premium (4 estilos adicionais)',
+      description: 'Desbloqueio das outras 4 variações de estilo geradas por IA',
       category_id: 'services',
       quantity: 1,
       unit_price: BUMP_PRICE_BRL,

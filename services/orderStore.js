@@ -37,9 +37,9 @@ const orders = new Map();
  * @property {string|null} fbc - cookie _fbc do Meta Pixel (só existe se o clique veio de um anúncio)
  * @property {string|null} clientIp - IP do cliente no momento do pedido (Meta CAPI)
  * @property {string|null} userAgent - User-Agent do navegador no momento do pedido (Meta CAPI)
- * @property {boolean} bumpPurchased - true se o cliente comprou o order bump "Pacote Premium" (11 estilos extras)
- * @property {'pending'|'generating'|'ready'|'failed'|null} bumpStatus - status da geração dos 11 estilos extras (só relevante se bumpPurchased)
- * @property {Array<{style: string, imageBuffer: Buffer}>|null} bumpImages - as 11 fotos extras já geradas (prontas quando bumpStatus === 'ready')
+ * @property {boolean} bumpPurchased - true se o cliente comprou o order bump "Pacote Premium" (4 estilos extras)
+ * @property {'pending'|'generating'|'ready'|'failed'|null} bumpStatus - status da geração dos 4 estilos extras (só relevante se bumpPurchased)
+ * @property {Array<{style: string, imageBuffer: Buffer}>|null} bumpImages - as 4 fotos extras já geradas (prontas quando bumpStatus === 'ready')
  */
 
 function createOrder({ style, selfieBuffer, selfieMimeType, fbp, fbc, clientIp, userAgent }) {
