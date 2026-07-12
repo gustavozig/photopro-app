@@ -33,7 +33,12 @@ router.post('/webhooks/mercadopago', async (req, res) => {
     }
 
     const payment = await mercadoPagoService.getPayment(paymentId);
-    const orderId = payment.external_reference;
+    const rawRef = payment.external_reference;
+    // Pagamentos do upsell pós-compra (ver POST /orders/:id/upsell-payments)
+    // usam "<orderId>:upsell" como external_reference, pra diferenciar de um
+    // pagamento do pedido base com o mesmo order.id.
+    const isUpsell = typeof rawRef === 'string' && rawRef.endsWith(':upsell');
+    const orderId = isUpsell ? rawRef.slice(0, -':upsell'.length) : rawRef;
     const order = orderStore.getOrder(orderId);
 
     if (!order) {
@@ -44,6 +49,31 @@ router.post('/webhooks/mercadopago', async (req, res) => {
     if (payment.status === 'approved') {
       // Responde já para o Mercado Pago não re-tentar por timeout, e só
       // depois consome a API da OpenAI (pode levar alguns segundos).
+      if (isUpsell) {
+        // Upsell pós-compra: o pedido base já está 'paid' — só confirmamos
+        // o bump e disparamos a geração dos outros 4 estilos. Ignora se já
+        // tiver sido processado antes (evita reprocessar em notificações
+        // duplicadas da MP).
+        if (!order.bumpPurchased) {
+          orderStore.updateOrder(order.id, { bumpPurchased: true });
+          res.status(200).end();
+          runBumpGenerationInBackground(order.id);
+          const publicUrl = req.app.get('publicUrl');
+          metaCapiService.sendPurchaseEvent({
+            orderId: `${order.id}-upsell`,
+            value: mercadoPagoService.BUMP_PRICE_BRL,
+            email: payment.payer?.email || null,
+            clientIp: order.clientIp,
+            userAgent: order.userAgent,
+            fbp: order.fbp,
+            fbc: order.fbc,
+            sourceUrl: publicUrl,
+          });
+          return;
+        }
+        return res.status(200).end();
+      }
+
       if (order.status === 'pending_payment') {
         orderStore.updateOrder(order.id, { status: 'generating', paymentId });
         res.status(200).end();
@@ -71,7 +101,10 @@ router.post('/webhooks/mercadopago', async (req, res) => {
       return res.status(200).end();
     }
 
-    if (payment.status === 'rejected') {
+    // Um upsell recusado NÃO pode derrubar o status do pedido base (que já
+    // está 'paid' e entregue) — só pagamentos recusados do pedido base
+    // viram 'payment_rejected'.
+    if (payment.status === 'rejected' && !isUpsell) {
       orderStore.updateOrder(order.id, { status: 'payment_rejected' });
     }
 
@@ -95,9 +128,14 @@ async function runGenerationInBackground(orderId) {
     orderStore.updateOrder(orderId, {
       status: 'paid',
       fullImageBuffer,
-      // selfieBuffer só é apagado depois — se o cliente comprou o Pacote
-      // Premium, ainda precisamos dela pra gerar os outros 4 estilos (ver
-      // runBumpGenerationInBackground abaixo). Se não comprou, apagamos já.
+      // selfieBuffer é mantida — se o cliente comprou o Pacote Premium no
+      // checkout, ela é usada agora (runBumpGenerationInBackground); se
+      // não comprou, ela fica disponível ainda por até a janela de
+      // retenção do pedido (2h, ver ORDER_TTL_MS em orderStore.js), caso
+      // ele volte e aceite o upsell pós-compra (ver POST
+      // /orders/:id/upsell-payments). purgeExpiredOrders() cuida de
+      // apagar tudo (pedido inteiro, incluindo a selfie) quando o prazo
+      // vence — não existe exclusão imediata pra quem compra só a foto.
     });
   } catch (err) {
     console.error(`[order ${orderId}] geração falhou após pagamento aprovado:`, err.message || err);
@@ -114,9 +152,10 @@ async function runGenerationInBackground(orderId) {
   const freshOrder = orderStore.getOrder(orderId);
   if (freshOrder && freshOrder.bumpPurchased) {
     runBumpGenerationInBackground(orderId);
-  } else {
-    orderStore.updateOrder(orderId, { selfieBuffer: null });
   }
+  // Se não comprou o bump no checkout, a selfie NÃO é apagada aqui — fica
+  // disponível até a janela de retenção do pedido expirar (ver comentário
+  // acima), pro caso do upsell pós-compra ser aceito depois.
 }
 
 // ---------------------------------------------------------------------------

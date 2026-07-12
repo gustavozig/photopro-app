@@ -199,4 +199,37 @@ router.post('/orders/:id/payments', async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// Upsell pós-compra "Pacote Premium": só aparece pro cliente que comprou a
+// foto única (sem o order bump no checkout) e já viu o resultado. Cobra
+// SÓ o valor do bump — nunca marca bumpPurchased aqui (isso só acontece
+// quando o webhook confirmar o pagamento aprovado, ver routes/webhooks.js),
+// pra não travar um Pix ainda pendente como se já tivesse sido pago.
+// ---------------------------------------------------------------------------
+router.post('/orders/:id/upsell-payments', async (req, res) => {
+  const order = orderStore.getOrder(req.params.id);
+  if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
+  if (order.status !== 'paid') {
+    return res.status(400).json({ error: 'Este pedido ainda não foi confirmado.' });
+  }
+  if (order.bumpPurchased) {
+    return res.status(400).json({ error: 'Você já tem o Pacote Premium neste pedido.' });
+  }
+  if (!order.selfieBuffer) {
+    // Selfie já expirou (janela de retenção de até 2h, ver orderStore.js) —
+    // sem ela não dá pra gerar os outros 4 estilos.
+    return res.status(400).json({ error: 'O prazo para adicionar o Pacote Premium a este pedido expirou.' });
+  }
+
+  try {
+    const publicUrl = req.app.get('publicUrl');
+    const result = await mercadoPagoService.createUpsellPayment(order, req.body || {}, publicUrl);
+    res.json(result);
+  } catch (err) {
+    console.error(`[order ${order.id}] erro ao criar pagamento do upsell:`, err);
+    const detail = err && err.friendly ? err.message : 'Tente novamente.';
+    res.status(500).json({ error: detail });
+  }
+});
+
 module.exports = router;
