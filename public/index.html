@@ -1353,6 +1353,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
             <button class="btn btn-primary btn-block" id="unlockBtn">Desbloquear Minha Foto Agora</button>
             <p class="price-trust-note">🔒 Pagamento seguro • Compra única • Sem assinatura</p>
             <button class="btn btn-ghost btn-block" id="downloadBtn" style="display:none;margin-top:10px;">Baixar imagem</button>
+            <p class="price-trust-note" id="downloadExpiryNote" style="display:none;color:#e0a63a;">⏳ Por segurança, suas fotos ficam disponíveis por até 2 horas. Baixe agora para não perdê-las.</p>
           </div>
         </div>
 
@@ -2832,6 +2833,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     document.getElementById('lockChip').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg> Liberado';
     document.getElementById('unlockBtn').style.display = 'none';
     document.getElementById('downloadBtn').style.display = 'block';
+    document.getElementById('downloadExpiryNote').style.display = 'block';
     var resultImgWrap = document.querySelector('#resultFrame .result-img');
     if(resultImgWrap && lastFullImage){
       resultImgWrap.innerHTML = '<img src="'+lastFullImage+'" alt="Sua foto profissional">';
@@ -2963,6 +2965,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
             hideGeneratingState();
             lastFullImage = data.fullImage;
             firePurchaseOnce(orderId);
+            saveOrderForRecovery(orderId);
             revealPaidResult();
             if(data.bumpPurchased){
               pollBumpGallery(orderId);
@@ -2987,12 +2990,14 @@ function fillLoopTrack(track, buildOneCopyHtml){
   }
 
   // ---- volta do checkout do Mercado Pago (back_urls) ----
+  var handledOrderFromUrl = false;
   (function handlePaymentReturnFromUrl(){
     var params = new URLSearchParams(window.location.search);
     var orderId = params.get('order');
     var paymentStatus = params.get('payment');
     if(!orderId) return;
 
+    handledOrderFromUrl = true;
     currentOrderId = orderId;
     openAppOverlay();
     goTo(4);
@@ -3006,6 +3011,61 @@ function fillLoopTrack(track, buildOneCopyHtml){
       alert('Seu pagamento está pendente de confirmação. Assim que for aprovado, sua foto será liberada automaticamente.');
       pollUntilPaid(orderId);
     }
+  })();
+
+  // ---- recuperação automática após refresh acidental ----
+  // Se o cliente já pagou e atualizar a página sem querer, a foto some da
+  // tela (só existia numa variável JS). Pra evitar isso, guardamos o ID do
+  // pedido no localStorage assim que o pagamento é confirmado (ver
+  // saveOrderForRecovery, chamado em pollUntilPaid) e, ao carregar a
+  // página, checamos aqui se existe um pedido salvo pra reabrir o
+  // resultado sozinho — sem o cliente precisar fazer nada.
+  //
+  // Só funciona no mesmo navegador/dispositivo e enquanto o pedido ainda
+  // existir no servidor. O backend guarda cada pedido por só 2 horas (ver
+  // ORDER_TTL_MS em services/orderStore.js) e depois apaga a foto de
+  // propósito, por segurança — não é um bug, é a política de retenção.
+  // Se a recuperação falhar (pedido já expirado), avisamos isso de forma
+  // clara em vez de mandar o cliente "falar com o suporte".
+  var ORDER_RECOVERY_KEY = 'photopro_recover_order';
+  function saveOrderForRecovery(orderId){
+    try{ localStorage.setItem(ORDER_RECOVERY_KEY, orderId); }catch(e){ /* localStorage indisponível, segue sem recuperação */ }
+  }
+  function clearStoredOrderRecovery(){
+    try{ localStorage.removeItem(ORDER_RECOVERY_KEY); }catch(e){}
+  }
+  (function recoverStoredOrder(){
+    if(handledOrderFromUrl) return; // já tratado pelo retorno do Mercado Pago acima
+
+    var orderId;
+    try{ orderId = localStorage.getItem(ORDER_RECOVERY_KEY); }catch(e){ orderId = null; }
+    if(!orderId) return;
+
+    currentOrderId = orderId;
+    openAppOverlay();
+    goTo(4);
+    showGeneratingState();
+
+    fetch('/api/orders/' + orderId)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        hideGeneratingState();
+        if(data.status === 'paid' && data.fullImage){
+          lastFullImage = data.fullImage;
+          revealPaidResult();
+          if(data.bumpPurchased){
+            pollBumpGallery(orderId);
+          }
+        } else {
+          clearStoredOrderRecovery();
+          closeAppOverlay();
+          alert('Por segurança, suas fotos ficam disponíveis no nosso sistema por até 2 horas após a compra e depois são removidas automaticamente — não é possível recuperá-las após esse prazo. Se ainda precisar da foto, é só refazer o pedido.');
+        }
+      })
+      .catch(function(){
+        hideGeneratingState();
+        closeAppOverlay();
+      });
   })();
 })();
 
