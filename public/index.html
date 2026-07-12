@@ -1051,7 +1051,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
         <button class="faq-q">Minha selfie fica armazenada?
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
-        <div class="faq-a"><p>A foto enviada é processada apenas para gerar o seu resultado. Em conformidade com a LGPD, você pode solicitar a exclusão dos seus dados a qualquer momento. Assim que o pedido é entregue, a selfie original é descartada do servidor.</p></div>
+        <div class="faq-a"><p>A foto enviada é processada apenas para gerar o seu resultado. Em conformidade com a LGPD, você pode solicitar a exclusão dos seus dados a qualquer momento. Por até 2 horas após a compra, mantemos a selfie original no servidor — só para o caso de você querer desbloquear o Pacote Premium depois de já ter recebido sua primeira foto. Passado esse prazo, ela é apagada automaticamente.</p></div>
       </div>
       <div class="faq-item">
         <button class="faq-q">Quanto tempo leva para gerar a foto?
@@ -1251,7 +1251,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
       <div class="app-panel" data-panel="3">
         <div class="friction-wrap">
           <div class="friction-trust-row">
-            <span class="friction-trust-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 7V4.5C9 3.7 9.7 3 10.5 3H13.5C14.3 3 15 3.7 15 4.5V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 7L7 19.5C7.1 20.3 7.8 21 8.6 21H15.4C16.2 21 16.9 20.3 17 19.5L18 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11V17M14 11V17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Sua selfie é privada e é apagada após o processamento</span>
+            <span class="friction-trust-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 7V4.5C9 3.7 9.7 3 10.5 3H13.5C14.3 3 15 3.7 15 4.5V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 7L7 19.5C7.1 20.3 7.8 21 8.6 21H15.4C16.2 21 16.9 20.3 17 19.5L18 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11V17M14 11V17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Sua selfie é privada e é apagada em até 2 horas</span>
           </div>
 
           <div class="friction-preview">
@@ -1367,6 +1367,29 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
             <p id="bumpGalleryStatus">Gerando suas outras 4 fotos, só um instante...</p>
           </div>
           <div class="bump-gallery-grid" id="bumpGalleryGrid"></div>
+        </div>
+
+        <!-- Upsell pós-compra: só aparece pra quem comprou a foto única (sem
+             o order bump no checkout) e já viu o resultado. Cobra separado
+             via POST /orders/:id/upsell-payments (ver mercadoPagoService.js
+             / routes/orders.js) — a selfie fica disponível pra isso até a
+             janela de retenção do pedido expirar (2h). -->
+        <div class="bump-gallery-section" id="upsellOfferSection" style="display:none;">
+          <div class="bump-card" style="cursor:default;">
+            <div class="bump-head" style="cursor:default;">
+              <span class="bump-title">⭐ Ainda dá tempo de completar seu Pacote Premium</span>
+              <span class="bump-badge">+R$ 9,90</span>
+            </div>
+            <p class="bump-copy">Você levou só 1 foto. Desbloqueie as outras 4 variações de estilo geradas a partir da mesma selfie — sem precisar enviar nada de novo.</p>
+            <ul class="bump-benefits">
+              <li><span>✅</span> Mais 4 fotos profissionais em alta resolução</li>
+              <li><span>✅</span> Pacote completo com 5 estilos</li>
+              <li><span>✅</span> Fundos e iluminação premium</li>
+              <li><span>✅</span> Versões prontas para LinkedIn, currículo e WhatsApp</li>
+            </ul>
+            <p class="bump-urgency" id="upsellExpiryNote">⏳ Disponível só enquanto sua selfie ainda estiver no sistema (até 2h após a compra).</p>
+            <button class="btn btn-primary btn-block" id="upsellUnlockBtn" style="margin-top:14px;">Desbloquear Pacote Premium (+R$ 9,90)</button>
+          </div>
         </div>
 
         <!-- Loading real pós-pagamento: só aparece depois que o pagamento é confirmado -->
@@ -2336,6 +2359,11 @@ function fillLoopTrack(track, buildOneCopyHtml){
     if(bumpSection){ bumpSection.style.display = 'none'; }
     var bumpGrid = document.getElementById('bumpGalleryGrid');
     if(bumpGrid) bumpGrid.innerHTML = '';
+    var upsellSection = document.getElementById('upsellOfferSection');
+    if(upsellSection){ upsellSection.style.display = 'none'; }
+    var expiryNote = document.getElementById('downloadExpiryNote');
+    if(expiryNote){ expiryNote.style.display = 'none'; }
+    isUpsellCheckout = false;
     goTo(1);
     var heroEl = document.getElementById('hero');
     if(heroEl) heroEl.scrollIntoView({behavior:'smooth'});
@@ -2367,6 +2395,11 @@ function fillLoopTrack(track, buildOneCopyHtml){
   var bumpCard = document.getElementById('bumpCard');
   var bumpHead = document.getElementById('bumpHead');
   var payTotalValue = document.getElementById('payTotalValue');
+  // true quando o modal foi aberto pelo botão de upsell pós-compra (ver
+  // upsellUnlockBtn abaixo) em vez do unlockBtn normal — muda o endpoint de
+  // pagamento, o total cobrado e esconde o checkbox do order bump (aqui o
+  // pacote inteiro JÁ é a oferta, não uma opção dentro de outra compra).
+  var isUpsellCheckout = false;
 
   var mpConfigPromise = null;
   function getMpConfig(){
@@ -2431,6 +2464,11 @@ function fillLoopTrack(track, buildOneCopyHtml){
   }
   function currentTotalBRL(){
     return sitePriceBRL + (bumpSelected ? bumpPriceBRL : 0);
+  }
+  // total exibido/cobrado no modal — no upsell pós-compra é sempre só o
+  // valor do bump, fixo (não passa pelo checkbox do bumpSelected).
+  function payButtonTotalBRL(){
+    return isUpsellCheckout ? bumpPriceBRL : currentTotalBRL();
   }
   function updateBumpUI(){
     bumpCard.classList.toggle('off', !bumpSelected);
@@ -2531,8 +2569,23 @@ function fillLoopTrack(track, buildOneCopyHtml){
     pixBtn.disabled = false; pixBtn.textContent = 'Gerar QR Code Pix';
     var cardBtn = document.getElementById('cardSubmitBtn');
     cardBtn.disabled = false;
-    bumpSelected = true; // cada nova tentativa de checkout começa com o bump marcado
-    updateBumpUI();
+
+    if(isUpsellCheckout){
+      // upsell pós-compra: sem checkbox de bump (o pacote inteiro já É a
+      // oferta), total fixo = só o valor do bump.
+      bumpCard.style.display = 'none';
+      document.querySelector('#modalPayForm h3').textContent = 'Pacote Premium';
+      document.getElementById('modalPayDesc').textContent = 'Desbloqueie as outras 4 fotos do seu pacote — cartão ou Pix, sem sair do site.';
+      payTotalValue.textContent = formatBRL(bumpPriceBRL);
+      payTotalValue.classList.remove('bump-active');
+      cardBtn.textContent = 'Pagar ' + formatBRL(bumpPriceBRL);
+    } else {
+      bumpCard.style.display = '';
+      document.querySelector('#modalPayForm h3').textContent = 'Pagamento único';
+      document.getElementById('modalPayDesc').textContent = 'Pague direto por aqui, sem sair do site — cartão ou Pix.';
+      bumpSelected = true; // cada nova tentativa de checkout começa com o bump marcado
+      updateBumpUI();
+    }
   }
 
   function mountFallbackButton(){
@@ -2618,23 +2671,76 @@ function fillLoopTrack(track, buildOneCopyHtml){
       pixBox.style.display = 'block';
       document.getElementById('pixQrImg').src = 'data:image/png;base64,' + result.pix.qrCodeBase64;
       document.getElementById('pixCopyInput').value = result.pix.qrCode;
-      pollUntilPaid(currentOrderId);
+      if(isUpsellCheckout){ pollUntilUpsellConfirmed(currentOrderId); } else { pollUntilPaid(currentOrderId); }
       return;
     }
     if(result.status === 'rejected'){
       showCfError('Pagamento recusado. Tente novamente com outro cartão ou escolha Pix.');
       var cardBtn = document.getElementById('cardSubmitBtn');
-      cardBtn.disabled = false; cardBtn.textContent = 'Pagar ' + formatBRL(currentTotalBRL());
+      cardBtn.disabled = false; cardBtn.textContent = 'Pagar ' + formatBRL(payButtonTotalBRL());
       return;
     }
     // 'approved', 'in_process' ou 'pending' (cartão em análise): mostra
     // "confirmando" e aguarda a confirmação real vinda do webhook.
     payForm.style.display = 'none';
     processing.classList.add('visible');
-    pollUntilPaid(currentOrderId);
+    if(isUpsellCheckout){ pollUntilUpsellConfirmed(currentOrderId); } else { pollUntilPaid(currentOrderId); }
+  }
+
+  // ---- polling específico do upsell pós-compra ----
+  // Diferente de pollUntilPaid (que espera order.status virar 'paid'), aqui
+  // o pedido base JÁ está 'paid' — o que estamos esperando é o webhook
+  // confirmar o pagamento do upsell e marcar bumpPurchased=true (ver
+  // routes/webhooks.js, branch isUpsell). Só então a galeria de 4 fotos
+  // extras começa a ser gerada.
+  function pollUntilUpsellConfirmed(orderId){
+    var attempts = 0;
+    if(paidPollInterval) clearInterval(paidPollInterval);
+    paidPollInterval = setInterval(function(){
+      attempts++;
+      fetch('/api/orders/' + orderId)
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          if(data.bumpPurchased){
+            clearInterval(paidPollInterval);
+            closeModal();
+            hideUpsellOffer();
+            pollBumpGallery(orderId);
+          } else if(attempts > 40){
+            clearInterval(paidPollInterval);
+            processing.classList.remove('visible');
+            payForm.style.display = 'block';
+            alert('A confirmação do pagamento está demorando mais que o esperado. Atualize a página em instantes.');
+          }
+          // ainda aguardando o webhook confirmar -> continua
+        })
+        .catch(function(){ /* tenta de novo no próximo ciclo */ });
+    }, 2500);
+  }
+
+  function showUpsellOffer(){
+    var section = document.getElementById('upsellOfferSection');
+    if(section) section.style.display = 'block';
+  }
+  function hideUpsellOffer(){
+    var section = document.getElementById('upsellOfferSection');
+    if(section) section.style.display = 'none';
   }
 
   document.getElementById('unlockBtn').addEventListener('click', function(){
+    isUpsellCheckout = false;
+    overlay.classList.add('open');
+    resetPaymentModalUI();
+    getMpConfig().then(function(cfg){
+      if(cfg && cfg.mpPublicKey){
+        mountCardFields(cfg.mpPublicKey);
+      } else {
+        mountFallbackButton();
+      }
+    });
+  });
+  document.getElementById('upsellUnlockBtn').addEventListener('click', function(){
+    isUpsellCheckout = true;
     overlay.classList.add('open');
     resetPaymentModalUI();
     getMpConfig().then(function(cfg){
@@ -2668,13 +2774,14 @@ function fillLoopTrack(track, buildOneCopyHtml){
     btn.disabled = true;
     btn.textContent = 'Gerando QR Code...';
 
-    fetch('/api/orders/' + currentOrderId + '/payments', {
+    var pixEndpoint = '/api/orders/' + currentOrderId + (isUpsellCheckout ? '/upsell-payments' : '/payments');
+    fetch(pixEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         payment_method_id: 'pix',
         deviceId: window.MP_DEVICE_SESSION_ID || null,
-        bump: bumpSelected,
+        bump: isUpsellCheckout ? undefined : bumpSelected,
         payer: {
           email: email,
           first_name: n.firstName,
@@ -2738,7 +2845,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
         payment_method_id: detectedPaymentMethodId,
         installments: 1,
         deviceId: window.MP_DEVICE_SESSION_ID || null,
-        bump: bumpSelected,
+        bump: isUpsellCheckout ? undefined : bumpSelected,
         payer: {
           email: email,
           first_name: n.firstName,
@@ -2748,14 +2855,15 @@ function fillLoopTrack(track, buildOneCopyHtml){
       };
       if(detectedIssuerId) payload.issuer_id = detectedIssuerId;
 
-      return fetch('/api/orders/' + currentOrderId + '/payments', {
+      var cardEndpoint = '/api/orders/' + currentOrderId + (isUpsellCheckout ? '/upsell-payments' : '/payments');
+      return fetch(cardEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       }).then(function(r){ return r.json().then(function(body){ return { ok: r.ok, body: body }; }); });
     }).then(function(res){
       btn.disabled = false;
-      btn.textContent = 'Pagar ' + formatBRL(currentTotalBRL());
+      btn.textContent = 'Pagar ' + formatBRL(payButtonTotalBRL());
       if(!res.ok || res.body.error){
         showCfError(res.body.error || 'Não foi possível processar o pagamento. Tente novamente.');
         return;
@@ -2763,7 +2871,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
       handleDirectPaymentResult(res.body);
     }).catch(function(){
       btn.disabled = false;
-      btn.textContent = 'Pagar ' + formatBRL(currentTotalBRL());
+      btn.textContent = 'Pagar ' + formatBRL(payButtonTotalBRL());
       showCfError('Não foi possível processar o cartão. Confira os dados e tente novamente.');
     });
   });
@@ -2969,6 +3077,8 @@ function fillLoopTrack(track, buildOneCopyHtml){
             revealPaidResult();
             if(data.bumpPurchased){
               pollBumpGallery(orderId);
+            } else {
+              showUpsellOffer();
             }
           } else if(data.status === 'generation_failed'){
             clearInterval(paidPollInterval);
@@ -3055,6 +3165,8 @@ function fillLoopTrack(track, buildOneCopyHtml){
           revealPaidResult();
           if(data.bumpPurchased){
             pollBumpGallery(orderId);
+          } else {
+            showUpsellOffer();
           }
         } else {
           clearStoredOrderRecovery();
