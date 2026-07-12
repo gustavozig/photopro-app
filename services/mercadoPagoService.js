@@ -204,6 +204,104 @@ async function createDirectPayment(order, formData, publicUrl) {
 }
 
 /**
+ * Cria o pagamento do upsell pós-compra "Pacote Premium" — cobrado
+ * separadamente, DEPOIS que o pedido base já foi pago e entregue (cliente
+ * viu a foto, decidiu voltar e desbloquear os outros 4 estilos). Cobra
+ * SÓ o valor do bump (nunca o preço da foto base de novo).
+ *
+ * external_reference recebe o sufixo ":upsell" pra o webhook (ver
+ * routes/webhooks.js) saber diferenciar isto de um pagamento do pedido
+ * base com o mesmo order.id, e rotear pra runBumpGenerationInBackground
+ * em vez do fluxo normal de geração + entrega.
+ *
+ * @param {{id: string, style: string}} order
+ * @param {object} formData - mesmo formato de createDirectPayment
+ * @param {string} publicUrl
+ */
+async function createUpsellPayment(order, formData, publicUrl) {
+  const payment = new Payment(getClient());
+
+  if (formData.payment_method_id === 'pix' && !formData.payer?.identification?.number) {
+    const err = new Error('CPF do pagador não informado — obrigatório para pagamento via Pix.');
+    err.friendly = true;
+    throw err;
+  }
+
+  const body = {
+    transaction_amount: BUMP_PRICE_BRL,
+    description: `PhotoPRO — Pacote Premium (upsell pos-compra, pedido ${order.id})`,
+    payment_method_id: formData.payment_method_id,
+    payer: formData.payer,
+    external_reference: `${order.id}:upsell`,
+    notification_url: `${publicUrl}/api/webhooks/mercadopago`,
+    statement_descriptor: 'PHOTOPRO',
+    additional_info: {
+      items: [
+        {
+          id: `${order.id}-upsell`,
+          title: 'PhotoPRO — Pacote Premium (4 estilos adicionais)',
+          description: 'Desbloqueio pos-compra das outras 4 variacoes de estilo geradas por IA',
+          category_id: 'services',
+          quantity: 1,
+          unit_price: BUMP_PRICE_BRL,
+        },
+      ],
+      payer: {
+        first_name: formData.payer?.first_name || undefined,
+        last_name: formData.payer?.last_name || undefined,
+      },
+    },
+  };
+  if (formData.token) body.token = formData.token;
+  if (formData.installments) body.installments = formData.installments;
+  if (formData.issuer_id) body.issuer_id = formData.issuer_id;
+
+  let result;
+  try {
+    result = await payment.create({
+      body,
+      requestOptions: {
+        idempotencyKey: `${order.id}-upsell-${Date.now()}`,
+        ...(formData.deviceId ? { meliSessionId: formData.deviceId } : {}),
+      },
+    });
+  } catch (mpErr) {
+    const causeList = mpErr?.cause;
+    const causeDetail = Array.isArray(causeList) && causeList.length
+      ? causeList.map((c) => c.description || c.code).filter(Boolean).join('; ')
+      : null;
+    const detail = causeDetail || mpErr?.message || 'Erro desconhecido na API do Mercado Pago.';
+    console.error(`[order ${order.id}] Mercado Pago rejeitou o pagamento do upsell:`, {
+      status: mpErr?.status,
+      cause: causeList,
+      message: mpErr?.message,
+    });
+    const err = new Error(detail);
+    err.friendly = true;
+    throw err;
+  }
+
+  const out = {
+    id: result.id,
+    status: result.status,
+    statusDetail: result.status_detail,
+    paymentMethodId: result.payment_method_id,
+    amount: BUMP_PRICE_BRL,
+  };
+
+  const txData = result.point_of_interaction?.transaction_data;
+  if (txData) {
+    out.pix = {
+      qrCode: txData.qr_code,
+      qrCodeBase64: txData.qr_code_base64,
+      ticketUrl: txData.ticket_url,
+    };
+  }
+
+  return out;
+}
+
+/**
  * Valida a assinatura HMAC do webhook do Mercado Pago (header x-signature).
  * Ver: https://www.mercadopago.com.br/developers/en/docs/checkout-pro/payment-notifications
  */
@@ -234,6 +332,7 @@ function verifyWebhookSignature(req) {
 module.exports = {
   createCheckoutPreference,
   createDirectPayment,
+  createUpsellPayment,
   getPayment,
   verifyWebhookSignature,
   PRICE_BRL,
