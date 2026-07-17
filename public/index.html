@@ -382,6 +382,16 @@ section{padding:80px 0;}
    verde, fundo levemente tingido, e o ícone de seta vira uma miniatura
    real da foto enviada com um selo de check por cima. */
 .dropzone.has-file{border-style:solid;border-color:var(--green);background:var(--green-soft);}
+/* Pulso minimalista ao redor da caixa de upload — mesmo padrão visual do
+   ponto "ao vivo" do contador de fotos geradas hoje — para deixar claro,
+   sem exagero, que é ali que se envia a foto. Some assim que o arquivo é
+   selecionado. */
+.dropzone.upload-pulse:not(.has-file){animation:dropzonePulse 2.2s ease-out infinite;}
+@keyframes dropzonePulse{
+  0%{box-shadow:0 0 0 0 rgba(47,227,139,.45);}
+  70%{box-shadow:0 0 0 14px rgba(47,227,139,0);}
+  100%{box-shadow:0 0 0 0 rgba(47,227,139,0);}
+}
 .dz-icon-wrap{position:relative;width:34px;height:34px;margin:0 auto 16px;}
 .dz-icon-wrap svg{margin:0;}
 .dz-preview-img{
@@ -505,7 +515,16 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .friction-trust-badge{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--green);background:var(--green-soft);border:1px solid rgba(47,227,139,.25);padding:6px 12px;border-radius:99px;}
 .friction-trust-badge svg{flex-shrink:0;}
 .friction-preview{position:relative;width:132px;height:132px;margin:0 auto 34px;}
-.friction-preview-img{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;border:2px solid var(--border);background:#101413;}
+.friction-preview-img{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;border:2px solid var(--border);background:#101413;
+  /* A transição do filter:blur() na imagem interna, combinada com
+     overflow:hidden + border-radius, faz alguns navegadores (Safari/
+     WebKit em especial) recalcularem a camada de composição e "vazarem"
+     o conteúdo do formato circular pro quadrado por uma fração de
+     segundo a cada atualização do blur. clip-path + mask reforçam o
+     recorte circular durante a transição e isolate evita que o filho
+     filtrado escape da camada de composição do pai. */
+  clip-path:circle(50%);-webkit-mask-image:-webkit-radial-gradient(circle,#fff 100%,#000 100%);
+  transform:translateZ(0);isolation:isolate;}
 .friction-preview-img svg{width:100%;height:100%;}
 .friction-preview-img img{width:100%;height:100%;object-fit:cover;display:block;filter:blur(16px);transition:filter .4s ease;}
 .friction-scan{position:absolute;left:0;right:0;height:34%;top:-40%;pointer-events:none;mix-blend-mode:screen;
@@ -926,7 +945,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
       </div>
 
       <div class="hero-card">
-        <div class="dropzone hero-dropzone" id="heroDropzone">
+        <div class="dropzone hero-dropzone upload-pulse" id="heroDropzone">
           <input type="file" id="heroFileInput" accept="image/*">
           <div class="dz-icon-wrap">
             <svg class="dz-upload-icon" width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 16V4M12 4L7 9M12 4L17 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -935,7 +954,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
           </div>
           <h3>Arraste sua selfie aqui</h3>
           <p>ou clique para escolher um arquivo — JPG ou PNG</p>
-          <button type="button" class="btn btn-ghost" id="heroPickFileBtn">Escolher arquivo</button>
+          <button type="button" class="btn btn-ghost" id="heroPickFileBtn">Coloque sua foto aqui</button>
         </div>
         <button type="button" class="btn btn-primary btn-block" id="heroGenerateBtn" style="margin-top:18px;" disabled>Gerar minha foto grátis</button>
       </div>
@@ -1623,6 +1642,14 @@ function fillLoopTrack(track, buildOneCopyHtml){
     track.innerHTML += buildOneCopyHtml(copies);
     copies++;
   }
+  // Em alguns navegadores (principalmente Safari/iOS), a animação CSS do
+  // trilho pode não iniciar corretamente logo após o innerHTML ser
+  // reescrito no carregamento da página, deixando o carrossel parado até
+  // um refresh manual. Forçamos aqui um reflow e reiniciamos a animação
+  // explicitamente para garantir que ela sempre comece a rodar.
+  track.style.animation = 'none';
+  void track.offsetHeight; // força o reflow
+  track.style.animation = '';
 }
 
 // ---------- redes sociais marquee ----------
@@ -1905,7 +1932,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     heroFileInput.value = '';
     heroDropzone.querySelector('h3').textContent = heroDefaultTitle;
     heroDropzone.querySelector('p').textContent = heroDefaultSub;
-    heroPickFileBtn.textContent = 'Escolher arquivo';
+    heroPickFileBtn.textContent = 'Coloque sua foto aqui';
     heroDropzone.classList.remove('has-file');
     heroGenerateBtn.disabled = true;
     if(dzPreviewUrl){ URL.revokeObjectURL(dzPreviewUrl); dzPreviewUrl = null; }
@@ -1945,7 +1972,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     if(heroEl) heroEl.scrollIntoView({behavior:'smooth'});
   });
 
-  // ---- friction loading (step 3) — sunk cost, ~4min12s ----
+  // ---- friction loading (step 3) — sunk cost, ~2min30s ----
   // O tempo de espera aqui é só percepção de valor. Nenhuma chamada à
   // OpenAI acontece nesta etapa: em paralelo, o único request de rede é
   // POST /api/orders, que faz apenas validação local da selfie no servidor.
@@ -1982,23 +2009,23 @@ function fillLoopTrack(track, buildOneCopyHtml){
   var MICRO_PENDING_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg>';
   var MICRO_ACTIVE_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="14 43"/></svg>';
 
-  // 8 stages, ~4m12s total — a deliberadamente vagarosa construção de percepção de valor
+  // 8 stages, ~2m30s total — a deliberadamente vagarosa construção de percepção de valor
   var stages = [
-    { title:'Aprendendo seu rosto', sub:'Notando os detalhes e traços que só você tem', dur:28000,
+    { title:'Aprendendo seu rosto', sub:'Notando os detalhes e traços que só você tem', dur:16500,
       items:['Detectando pontos e proporções do rosto','Calculando simetria facial','Preservando identidade original'] },
-    { title:'Montando seu visual social', sub:'Vestindo você com terno ou blazer sem perder sua identidade', dur:32000,
+    { title:'Montando seu visual social', sub:'Vestindo você com terno ou blazer sem perder sua identidade', dur:19000,
       items:['Ajustando caimento do tecido','Adaptando cor ao tom de pele','Alinhando ombros e colarinho'] },
-    { title:'Iluminando como em estúdio', sub:'Criando a luz que valoriza os seus traços', dur:34000,
+    { title:'Iluminando como em estúdio', sub:'Criando a luz que valoriza os seus traços', dur:20000,
       items:['Equalizando exposição do rosto','Suavizando sombras duras','Adicionando luz de preenchimento'] },
-    { title:'Compondo o cenário perfeito', sub:'Substituindo o fundo pelo estilo escolhido', dur:30000,
+    { title:'Compondo o cenário perfeito', sub:'Substituindo o fundo pelo estilo escolhido', dur:18000,
       items:['Recortando contorno com precisão','Aplicando fundo do estilo selecionado','Ajustando profundidade de campo'] },
-    { title:'Refinando o tom da sua pele', sub:'Deixando sua pele com aparência natural de estúdio', dur:34000,
+    { title:'Refinando o tom da sua pele', sub:'Deixando sua pele com aparência natural de estúdio', dur:20000,
       items:['Equilibrando tom de pele','Suavizando textura sem perder realismo','Corrigindo brilho e reflexos'] },
-    { title:'Cuidando dos pequenos detalhes', sub:'Pequenos ajustes finos fazem toda a diferença', dur:30000,
+    { title:'Cuidando dos pequenos detalhes', sub:'Pequenos ajustes finos fazem toda a diferença', dur:18000,
       items:['Reduzindo ruído digital','Corrigindo imperfeições pontuais','Aplicando nitidez seletiva no rosto'] },
-    { title:'Preparando sua imagem final', sub:'Deixando tudo pronto em alta definição', dur:36000,
+    { title:'Preparando sua imagem final', sub:'Deixando tudo pronto em alta definição', dur:21500,
       items:['Renderizando camadas finais','Otimizando compressão sem perda de qualidade','Gerando arquivo em alta resolução'] },
-    { title:'Últimos retoques, quase lá', sub:'Garantindo que tudo fique perfeito antes de te entregar', dur:28000,
+    { title:'Últimos retoques, quase lá', sub:'Garantindo que tudo fique perfeito antes de te entregar', dur:16500,
       items:['Conferindo simetria final','Aplicando toque profissional de estúdio','Validando qualidade de entrega'] }
   ];
   var TOTAL_DURATION = stages.reduce(function(sum, s){ return sum + s.dur; }, 0);
