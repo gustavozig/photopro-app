@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 
 const orderStore = require('../services/orderStore');
+const photoArchive = require('../services/photoArchive');
 const mercadoPagoService = require('../services/mercadoPagoService');
 const openaiService = require('../services/openaiService');
 const previewService = require('../services/previewService');
@@ -132,8 +133,10 @@ router.post('/orders', upload.single('selfie'), async (req, res) => {
 // Consulta de status — usado pelo front-end tanto para o polling curto da
 // "etapa 3" (preparação) quanto para o polling real pós-pagamento (geração).
 // ---------------------------------------------------------------------------
-router.get('/orders/:id', (req, res) => {
-  const order = orderStore.getOrder(req.params.id);
+router.get('/orders/:id', async (req, res) => {
+  // memória primeiro; se o pedido já expirou/reiniciou, tenta o arquivo em
+  // disco (só existe para pedidos pagos — ver services/photoArchive.js)
+  const order = orderStore.getOrder(req.params.id) || (await photoArchive.loadOrder(req.params.id));
   if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
   res.json(serializeOrder(order));
 });
@@ -145,8 +148,8 @@ router.get('/orders/:id', (req, res) => {
 // o clique termina em "A página não pode ser carregada". Servir o PNG por
 // uma URL http normal com attachment resolve em qualquer navegador.
 // ---------------------------------------------------------------------------
-router.get('/orders/:id/download', (req, res) => {
-  const order = orderStore.getOrder(req.params.id);
+router.get('/orders/:id/download', async (req, res) => {
+  const order = orderStore.getOrder(req.params.id) || (await photoArchive.loadOrder(req.params.id));
   if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
   if (order.status !== 'paid' || !order.fullImageBuffer) {
     return res.status(403).json({ error: 'Foto disponível somente após o pagamento.' });
@@ -156,8 +159,8 @@ router.get('/orders/:id/download', (req, res) => {
   res.send(order.fullImageBuffer);
 });
 
-router.get('/orders/:id/download/bump/:index', (req, res) => {
-  const order = orderStore.getOrder(req.params.id);
+router.get('/orders/:id/download/bump/:index', async (req, res) => {
+  const order = orderStore.getOrder(req.params.id) || (await photoArchive.loadOrder(req.params.id));
   if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
   const idx = parseInt(req.params.index, 10);
   if (

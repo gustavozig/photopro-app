@@ -44,6 +44,10 @@ app.use('/api', webhooksRouter);
 
 // limpeza periódica de pedidos antigos (evita vazamento de memória)
 setInterval(orderStore.purgeExpiredOrders, 15 * 60 * 1000);
+// Limpeza do arquivo persistente de fotos pagas (retenção de 7 dias)
+const photoArchive = require('./services/photoArchive');
+photoArchive.purgeExpired();
+setInterval(photoArchive.purgeExpired, 24 * 60 * 60 * 1000);
 
 // fallback: qualquer outra rota devolve o front-end
 app.get('*', (req, res) => {

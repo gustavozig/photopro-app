@@ -1,6 +1,7 @@
 const express = require('express');
 
 const orderStore = require('../services/orderStore');
+const photoArchive = require('../services/photoArchive');
 const mercadoPagoService = require('../services/mercadoPagoService');
 const openaiService = require('../services/openaiService');
 const metaCapiService = require('../services/metaCapiService');
@@ -150,6 +151,9 @@ async function runGenerationInBackground(orderId) {
   }
 
   const freshOrder = orderStore.getOrder(orderId);
+  // Arquiva a foto paga em disco imediatamente — proteção contra o TTL de 2h
+  // da memória e contra restarts/redeploys (ver services/photoArchive.js).
+  photoArchive.saveOrder(freshOrder);
   if (freshOrder && freshOrder.bumpPurchased) {
     runBumpGenerationInBackground(orderId);
   }
@@ -218,6 +222,9 @@ async function runBumpGenerationInBackground(orderId) {
     bumpImages,
     selfieBuffer: null, // agora sim, não precisamos mais dela
   });
+
+  // Regrava o arquivo em disco, agora incluindo as fotos do Pacote Premium.
+  photoArchive.saveOrder(orderStore.getOrder(orderId));
 }
 
 module.exports = router;
