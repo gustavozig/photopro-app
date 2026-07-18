@@ -2978,13 +2978,11 @@ function fillLoopTrack(track, buildOneCopyHtml){
   });
 
   document.getElementById('downloadBtn').addEventListener('click', function(){
-    if(!lastFullImage) return;
-    var a = document.createElement('a');
-    a.href = lastFullImage;
-    a.download = 'photopro-foto-profissional.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    if(!currentOrderId) return;
+    // URL http real com Content-Disposition: attachment — funciona também nos
+    // navegadores embutidos (Instagram/Facebook), onde data: URLs falham com
+    // "A página não pode ser carregada".
+    window.location.href = '/api/orders/' + currentOrderId + '/download';
   });
 
   function revealPaidResult(){
@@ -3069,13 +3067,9 @@ function fillLoopTrack(track, buildOneCopyHtml){
     bumpPollInterval = setInterval(check, 3000);
   }
 
-  function downloadImage(dataUrl, filename){
-    var a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  function downloadBumpImage(index){
+    if(!currentOrderId) return;
+    window.location.href = '/api/orders/' + currentOrderId + '/download/bump/' + index;
   }
 
   function renderBumpGallery(images){
@@ -3083,7 +3077,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     var grid = document.getElementById('bumpGalleryGrid');
     statusEl.textContent = images.length + ' fotos prontas para baixar.';
     grid.innerHTML = '';
-    images.forEach(function(item){
+    images.forEach(function(item, itemIndex){
       var cell = document.createElement('div');
       cell.className = 'bump-gallery-item';
 
@@ -3101,8 +3095,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
       dl.title = 'Baixar';
       dl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3V15M12 15L7 10M12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
       dl.addEventListener('click', function(){
-        var safeName = item.style.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-');
-        downloadImage(item.image, 'photopro-' + safeName + '.png');
+        downloadBumpImage(itemIndex);
       });
 
       cell.appendChild(img);

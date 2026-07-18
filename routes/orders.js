@@ -139,6 +139,41 @@ router.get('/orders/:id', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Download direto das fotos como arquivo real (Content-Disposition).
+// Motivo: os navegadores embutidos do Instagram/Facebook (por onde chega a
+// maior parte do tráfego pago) não conseguem "baixar" data: URLs gigantes —
+// o clique termina em "A página não pode ser carregada". Servir o PNG por
+// uma URL http normal com attachment resolve em qualquer navegador.
+// ---------------------------------------------------------------------------
+router.get('/orders/:id/download', (req, res) => {
+  const order = orderStore.getOrder(req.params.id);
+  if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
+  if (order.status !== 'paid' || !order.fullImageBuffer) {
+    return res.status(403).json({ error: 'Foto disponível somente após o pagamento.' });
+  }
+  res.setHeader('Content-Type', 'image/png');
+  res.setHeader('Content-Disposition', 'attachment; filename="photopro-foto-profissional.png"');
+  res.send(order.fullImageBuffer);
+});
+
+router.get('/orders/:id/download/bump/:index', (req, res) => {
+  const order = orderStore.getOrder(req.params.id);
+  if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
+  const idx = parseInt(req.params.index, 10);
+  if (
+    order.status !== 'paid' || !order.bumpPurchased || order.bumpStatus !== 'ready' ||
+    !Array.isArray(order.bumpImages) || Number.isNaN(idx) || idx < 0 || idx >= order.bumpImages.length
+  ) {
+    return res.status(403).json({ error: 'Foto não disponível.' });
+  }
+  const img = order.bumpImages[idx];
+  const safeName = img.style.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-');
+  res.setHeader('Content-Type', 'image/png');
+  res.setHeader('Content-Disposition', `attachment; filename="photopro-${safeName}.png"`);
+  res.send(img.imageBuffer);
+});
+
+// ---------------------------------------------------------------------------
 // ETAPA 4 -> pagamento (FALLBACK): cria a preferência do Checkout Pro
 // (redireciona o cliente para fora do site). Só é usado pelo front-end se o
 // checkout embutido (Payment Brick, rota abaixo) não puder ser carregado —
