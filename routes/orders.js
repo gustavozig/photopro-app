@@ -4,6 +4,7 @@ const multer = require('multer');
 const orderStore = require('../services/orderStore');
 const photoArchive = require('../services/photoArchive');
 const { buildZip } = require('../services/zipBuilder');
+const leadStore = require('../services/leadStore');
 const mercadoPagoService = require('../services/mercadoPagoService');
 const openaiService = require('../services/openaiService');
 const previewService = require('../services/previewService');
@@ -158,6 +159,42 @@ router.get('/orders/:id/download', async (req, res) => {
   res.setHeader('Content-Type', 'image/png');
   res.setHeader('Content-Disposition', 'attachment; filename="photopro-foto-profissional.png"');
   res.send(order.fullImageBuffer);
+});
+
+// ---------------------------------------------------------------------------
+// Contato opcional (WhatsApp) informado durante a tela de loading. Serve pra
+// (a) o suporte localizar o pedido de quem perdeu a foto e (b) recuperar
+// manualmente quem abre o checkout e não paga. Também melhora a qualidade da
+// correspondência dos eventos do Meta (telefone hasheado no CAPI).
+// ---------------------------------------------------------------------------
+router.post('/orders/:id/contact', async (req, res) => {
+  const order = orderStore.getOrder(req.params.id);
+  if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
+
+  const digits = String(req.body?.whatsapp || '').replace(/\D/g, '');
+  // celular BR: 10 (fixo/antigo) a 11 dígitos com DDD; aceita com DDI 55 na frente
+  const local = digits.startsWith('55') && digits.length > 11 ? digits.slice(2) : digits;
+  if (local.length < 10 || local.length > 11) {
+    return res.status(400).json({ error: 'Informe um número com DDD, ex: (11) 98765-4321.' });
+  }
+
+  orderStore.updateOrder(order.id, { whatsapp: local });
+  await leadStore.saveLead({ orderId: order.id, whatsapp: local, style: order.style, status: order.status });
+  res.json({ ok: true });
+});
+
+// Lista de contatos para atendimento/recuperação manual. Protegida por chave
+// simples (ADMIN_KEY) — sem login, mas suficiente pra não ficar aberta.
+router.get('/admin/leads', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY;
+  if (!adminKey || req.query.key !== adminKey) return res.status(403).json({ error: 'Acesso negado.' });
+
+  const leads = await leadStore.listLeads();
+  const enriched = leads.map((lead) => {
+    const live = orderStore.getOrder(lead.orderId);
+    return { ...lead, statusAtual: live ? live.status : 'expirado_da_memoria' };
+  });
+  res.json({ total: enriched.length, leads: enriched });
 });
 
 // Baixa TODAS as fotos do pedido num único ZIP — a ação principal da tela de

@@ -577,6 +577,18 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 .friction-engage-options .chip{background:var(--card-2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:8px 14px;border-radius:99px;cursor:pointer;transition:all .2s ease;}
 .friction-engage-options .chip:hover{border-color:var(--green);color:var(--green);}
 .friction-engage-skip{background:none;border:none;color:var(--muted-2);font-size:12px;cursor:pointer;text-decoration:underline;}
+.wa-field{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;transition:border-color .15s ease;}
+.wa-field:focus-within{border-color:var(--green);}
+.wa-ddi{font-size:13px;color:var(--muted);flex-shrink:0;}
+.wa-field input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:15px;font-family:inherit;min-width:0;}
+.wa-field input::placeholder{color:var(--muted-2);}
+.wa-error{display:none;color:var(--danger);font-size:11.5px;margin:0 0 8px;}
+.wa-error.show{display:block;}
+.wa-legal{font-size:10.5px;color:var(--muted-2);margin:0 0 10px;}
+.wa-confirmed{display:flex;align-items:center;gap:10px;background:var(--green-soft);border:1px solid rgba(47,227,139,.35);border-radius:12px;padding:12px 14px;text-align:left;}
+.wa-confirmed .wa-check{width:28px;height:28px;border-radius:50%;background:var(--green);color:#04140c;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.wa-confirmed strong{display:block;font-size:13px;}
+.wa-confirmed span{font-size:11.5px;color:var(--muted);}
 
 /* result */
 .result-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:36px;align-items:center;}
@@ -1317,15 +1329,16 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
         <div class="friction-engage" id="frictionEngage">
           <div class="friction-engage-card">
             <button class="friction-engage-close" id="frictionEngageClose" aria-label="Fechar">&times;</button>
-            <h4>Pra qual finalidade você vai usar essa foto?</h4>
-            <p>Isso ajuda a ajustar o enquadramento e o estilo final do resultado.</p>
-            <div class="friction-engage-options">
-              <button class="chip" data-use="LinkedIn">LinkedIn</button>
-              <button class="chip" data-use="Currículo">Currículo</button>
-              <button class="chip" data-use="Rede social">Rede social</button>
-              <button class="chip" data-use="Outro">Outro</button>
+            <h4><svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px;"><path d="M12 3L20 6.5V11C20 15.5 16.6 19.7 12 21C7.4 19.7 4 15.5 4 11V6.5L12 3Z" stroke="var(--green)" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12L11 14L15 10" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Proteja seu resultado</h4>
+            <p>Deixe seu WhatsApp para vincular ao seu pedido. Se a página fechar ou a internet cair, nosso suporte recupera sua foto.</p>
+            <div class="wa-field">
+              <span class="wa-ddi">+55</span>
+              <input type="tel" id="waInput" inputmode="numeric" autocomplete="tel-national" placeholder="(11) 90000-0000" maxlength="16">
             </div>
-            <button class="friction-engage-skip" id="frictionEngageSkip">Pular</button>
+            <p class="wa-error" id="waError"></p>
+            <button class="btn btn-primary btn-block" id="waSubmitBtn" style="margin-bottom:10px;">Vincular meu pedido</button>
+            <p class="wa-legal">Usamos apenas para atendimento sobre seu pedido.</p>
+            <button class="friction-engage-skip" id="frictionEngageSkip">Prefiro continuar sem vincular</button>
           </div>
         </div>
       </div>
@@ -2380,6 +2393,66 @@ function fillLoopTrack(track, buildOneCopyHtml){
   });
   frictionEngageSkip.addEventListener('click', hideEngage);
   frictionEngageClose.addEventListener('click', hideEngage);
+
+  // ---- caixa de WhatsApp (vincular o pedido) --------------------------------
+  // Opcional de propósito: a pessoa ainda não viu o preview, então exigir o
+  // número aqui arriscaria o trecho mais forte do funil. Quem preenche vira
+  // contato recuperável (ver GET /api/admin/leads) e melhora a correspondência
+  // dos eventos do Meta (telefone hasheado no CAPI).
+  var waInput = document.getElementById('waInput');
+  var waSubmitBtn = document.getElementById('waSubmitBtn');
+  var waError = document.getElementById('waError');
+
+  function maskPhoneBR(digits){
+    if(digits.length <= 2) return digits.length ? '(' + digits : '';
+    if(digits.length <= 6) return '(' + digits.slice(0,2) + ') ' + digits.slice(2);
+    if(digits.length <= 10) return '(' + digits.slice(0,2) + ') ' + digits.slice(2,6) + '-' + digits.slice(6);
+    return '(' + digits.slice(0,2) + ') ' + digits.slice(2,7) + '-' + digits.slice(7,11);
+  }
+  if(waInput){
+    waInput.addEventListener('input', function(){
+      var digits = waInput.value.replace(/\D/g, '').slice(0, 11);
+      waInput.value = maskPhoneBR(digits);
+      waError.classList.remove('show');
+    });
+    waInput.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); waSubmitBtn.click(); }
+    });
+  }
+
+  if(waSubmitBtn){
+    waSubmitBtn.addEventListener('click', function(){
+      var digits = (waInput.value || '').replace(/\D/g, '');
+      if(digits.length < 10 || digits.length > 11){
+        waError.textContent = 'Informe o número com DDD, ex: (11) 98765-4321.';
+        waError.classList.add('show');
+        waInput.focus();
+        return;
+      }
+      if(!currentOrderId){ hideEngage(); return; }
+
+      waSubmitBtn.disabled = true;
+      waSubmitBtn.textContent = 'Vinculando...';
+      fetch('/api/orders/' + currentOrderId + '/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ whatsapp: digits })
+      })
+        .then(function(r){ return r.json().then(function(j){ return { ok: r.ok, body: j }; }); })
+        .then(function(res){
+          if(!res.ok) throw new Error(res.body && res.body.error);
+          var card = document.querySelector('.friction-engage-card');
+          card.innerHTML = '<div class="wa-confirmed"><div class="wa-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><strong>Pedido vinculado</strong><span>' + maskPhoneBR(digits) + '</span></div></div>';
+          setTimeout(hideEngage, 1600);
+        })
+        .catch(function(err){
+          waError.textContent = (err && err.message) || 'Não foi possível vincular agora. Você pode continuar normalmente.';
+          waError.classList.add('show');
+          waSubmitBtn.disabled = false;
+          waSubmitBtn.textContent = 'Vincular meu pedido';
+        });
+    });
+  }
 
   toStep3.addEventListener('click', function(){
     if(dzPreviewUrl) frictionPreviewImgTag.src = dzPreviewUrl;

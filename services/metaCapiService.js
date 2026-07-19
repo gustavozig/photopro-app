@@ -31,13 +31,14 @@ function sha256(value) {
  * @param {string} params.orderId - usado para montar o event_id (dedupe com o pixel do navegador)
  * @param {number} params.value - valor da venda (ex: 9.90)
  * @param {string} [params.email] - e-mail do pagador (vem do payment.payer.email da Mercado Pago)
+ * @param {string} [params.phone] - telefone informado pelo cliente (só dígitos, com DDI 55) — sobe a qualidade da correspondência
  * @param {string} [params.clientIp] - IP do cliente, capturado na criação do pedido
  * @param {string} [params.userAgent] - User-Agent do navegador, capturado na criação do pedido
  * @param {string} [params.fbp] - cookie _fbp (setado pelo próprio pixel no navegador)
  * @param {string} [params.fbc] - cookie _fbc (só existe se o clique veio de um anúncio do Meta)
  * @param {string} [params.sourceUrl] - URL da página onde a compra aconteceu
  */
-async function sendPurchaseEvent({ orderId, value, email, clientIp, userAgent, fbp, fbc, sourceUrl }) {
+async function sendPurchaseEvent({ orderId, value, email, phone, clientIp, userAgent, fbp, fbc, sourceUrl }) {
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
 
@@ -48,6 +49,12 @@ async function sendPurchaseEvent({ orderId, value, email, clientIp, userAgent, f
 
   const userData = {};
   if (email) userData.em = [sha256(email)];
+  // Telefone precisa ir só com dígitos e DDI (padrão E.164 sem "+"), senão o
+  // Meta não casa o hash com o cadastro do usuário.
+  if (phone) {
+    const digits = String(phone).replace(/\D/g, '');
+    if (digits.length >= 10) userData.ph = [sha256(digits.startsWith('55') ? digits : `55${digits}`)];
+  }
   if (clientIp) userData.client_ip_address = clientIp;
   if (userAgent) userData.client_user_agent = userAgent;
   if (fbp) userData.fbp = fbp;
