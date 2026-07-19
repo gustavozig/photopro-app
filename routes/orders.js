@@ -3,6 +3,7 @@ const multer = require('multer');
 
 const orderStore = require('../services/orderStore');
 const photoArchive = require('../services/photoArchive');
+const { buildZip } = require('../services/zipBuilder');
 const mercadoPagoService = require('../services/mercadoPagoService');
 const openaiService = require('../services/openaiService');
 const previewService = require('../services/previewService');
@@ -157,6 +158,36 @@ router.get('/orders/:id/download', async (req, res) => {
   res.setHeader('Content-Type', 'image/png');
   res.setHeader('Content-Disposition', 'attachment; filename="photopro-foto-profissional.png"');
   res.send(order.fullImageBuffer);
+});
+
+// Baixa TODAS as fotos do pedido num único ZIP — a ação principal da tela de
+// resultado pra quem comprou o Pacote Premium (antes eram 5 downloads
+// separados, com alvos de toque pequenos no celular).
+router.get('/orders/:id/download/all', async (req, res) => {
+  const order = orderStore.getOrder(req.params.id) || (await photoArchive.loadOrder(req.params.id));
+  if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
+  if (order.status !== 'paid' || !order.fullImageBuffer) {
+    return res.status(403).json({ error: 'Fotos disponíveis somente após o pagamento.' });
+  }
+
+  const slug = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const files = [{ name: `photopro-1-${slug(order.style)}.png`, data: order.fullImageBuffer }];
+  if (Array.isArray(order.bumpImages)) {
+    order.bumpImages.forEach((img, i) => {
+      files.push({ name: `photopro-${i + 2}-${slug(img.style)}.png`, data: img.imageBuffer });
+    });
+  }
+
+  try {
+    const zip = buildZip(files);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="photopro-minhas-fotos.zip"');
+    res.setHeader('Content-Length', zip.length);
+    res.send(zip);
+  } catch (err) {
+    console.error(`[order ${order.id}] falha ao montar ZIP:`, err.message || err);
+    res.status(500).json({ error: 'Não foi possível montar o pacote. Baixe as fotos individualmente.' });
+  }
 });
 
 router.get('/orders/:id/download/bump/:index', async (req, res) => {

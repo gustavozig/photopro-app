@@ -599,11 +599,16 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
   position:absolute;left:0;right:0;bottom:0;padding:6px 8px 5px;font-size:10.5px;color:#fff;
   background:linear-gradient(to top,rgba(0,0,0,.75),transparent);line-height:1.25;
 }
+/* Barra de download embaixo de cada foto: alvo de toque de 40px (o antigo
+   ícone de 26px no canto era pequeno demais no celular e passava
+   despercebido — cliente relatou dificuldade pra baixar). */
 .bump-gallery-item .bump-item-dl{
-  position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);
-  display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;border:none;
+  position:absolute;left:0;right:0;bottom:0;height:40px;background:rgba(6,18,12,.82);
+  display:flex;align-items:center;justify-content:center;gap:6px;color:#fff;cursor:pointer;border:none;
+  font-size:12.5px;font-weight:600;font-family:inherit;transition:background .15s ease;
 }
 .bump-gallery-item .bump-item-dl:hover{background:var(--green);color:#06120c;}
+.bump-gallery-item .bump-item-label{bottom:40px;}
 .bump-gallery-loading{
   display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;grid-column:1/-1;padding:20px 0;
 }
@@ -1371,8 +1376,9 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
             </ul>
             <button class="btn btn-primary btn-block" id="unlockBtn">Desbloquear Minha Foto Agora</button>
             <p class="price-trust-note">🔒 Pagamento seguro • Compra única • Sem assinatura</p>
-            <button class="btn btn-ghost btn-block" id="downloadBtn" style="display:none;margin-top:10px;">Baixar imagem</button>
-            <p class="price-trust-note" id="downloadExpiryNote" style="display:none;color:#e0a63a;">⏳ Por segurança, suas fotos ficam disponíveis por até 2 horas. Baixe agora para não perdê-las.</p>
+            <button class="btn btn-primary btn-block" id="downloadAllBtn" style="display:none;margin-top:10px;">Baixar todas as fotos (ZIP)</button>
+            <button class="btn btn-ghost btn-block" id="downloadBtn" style="display:none;margin-top:10px;">Baixar só esta foto</button>
+            <p class="price-trust-note" id="downloadExpiryNote" style="display:none;color:var(--muted);">✓ Suas fotos ficam disponíveis para download por 7 dias.</p>
           </div>
         </div>
 
@@ -1833,6 +1839,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
   // ---- estado real do pedido (integra com o backend) ----
   var currentOrderId = null;
   var lastFullImage = null;
+  var lastBumpReady = false; // true quando as fotos do Pacote Premium já chegaram (habilita o ZIP)
   var paidPollInterval = null;
   var lastPreviewImage = null;
   var previewPollInterval = null;
@@ -2390,6 +2397,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
     toStep3.disabled = true;
     currentOrderId = null;
     lastFullImage = null;
+    lastBumpReady = false;
     lastPreviewImage = null;
     if(previewPollInterval) clearInterval(previewPollInterval);
     stopLoading();
@@ -2403,6 +2411,8 @@ function fillLoopTrack(track, buildOneCopyHtml){
     resultFrame.classList.remove('unlocked', 'has-real-preview', 'preview-loading');
     document.getElementById('unlockBtn').style.display = 'inline-flex';
     document.getElementById('downloadBtn').style.display = 'none';
+    var dlAllBtnReset = document.getElementById('downloadAllBtn');
+    if(dlAllBtnReset) dlAllBtnReset.style.display = 'none';
     if(bumpPollInterval) clearInterval(bumpPollInterval);
     var bumpSection = document.getElementById('bumpGallerySection');
     if(bumpSection){ bumpSection.style.display = 'none'; }
@@ -2977,6 +2987,11 @@ function fillLoopTrack(track, buildOneCopyHtml){
     closeModal();
   });
 
+  document.getElementById('downloadAllBtn').addEventListener('click', function(){
+    if(!currentOrderId) return;
+    window.location.href = '/api/orders/' + currentOrderId + '/download/all';
+  });
+
   document.getElementById('downloadBtn').addEventListener('click', function(){
     if(!currentOrderId) return;
     // URL http real com Content-Disposition: attachment — funciona também nos
@@ -2993,6 +3008,9 @@ function fillLoopTrack(track, buildOneCopyHtml){
     document.getElementById('unlockBtn').style.display = 'none';
     document.getElementById('downloadBtn').style.display = 'block';
     document.getElementById('downloadExpiryNote').style.display = 'block';
+    // "Baixar todas" só faz sentido pra quem tem mais de uma foto (Pacote Premium)
+    var dlAllBtn = document.getElementById('downloadAllBtn');
+    if(dlAllBtn) dlAllBtn.style.display = lastBumpReady ? 'block' : 'none';
     var resultImgWrap = document.querySelector('#resultFrame .result-img');
     if(resultImgWrap && lastFullImage){
       resultImgWrap.innerHTML = '<img src="'+lastFullImage+'" alt="Sua foto profissional">';
@@ -3050,6 +3068,9 @@ function fillLoopTrack(track, buildOneCopyHtml){
         .then(function(data){
           if(data.bumpStatus === 'ready' && Array.isArray(data.bumpImages)){
             clearInterval(bumpPollInterval);
+            lastBumpReady = true;
+            var zipBtn = document.getElementById('downloadAllBtn');
+            if(zipBtn) zipBtn.style.display = 'block';
             renderBumpGallery(data.bumpImages);
           } else if(data.bumpStatus === 'failed'){
             clearInterval(bumpPollInterval);
@@ -3093,7 +3114,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
       dl.type = 'button';
       dl.className = 'bump-item-dl';
       dl.title = 'Baixar';
-      dl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3V15M12 15L7 10M12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+      dl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3V15M12 15L7 10M12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Baixar';
       dl.addEventListener('click', function(){
         downloadBumpImage(itemIndex);
       });
@@ -3217,7 +3238,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
         } else {
           clearStoredOrderRecovery();
           closeAppOverlay();
-          alert('Por segurança, suas fotos ficam disponíveis no nosso sistema por até 2 horas após a compra e depois são removidas automaticamente — não é possível recuperá-las após esse prazo. Se ainda precisar da foto, é só refazer o pedido.');
+          alert('Suas fotos ficam disponíveis para download por 7 dias após a compra. Se já passou desse prazo, entre em contato pelo suporte informando o número do pedido.');
         }
       })
       .catch(function(){
