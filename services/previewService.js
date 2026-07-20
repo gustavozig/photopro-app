@@ -14,7 +14,10 @@ const path = require('path');
 // ---------------------------------------------------------------------------
 
 const PREVIEW_WIDTH = 480; // reduz banda, custo e detalhe — só o suficiente pra reconhecer a pessoa
-const BLUR_SIGMA = 12; // blur mais leve que a versão anterior, mas ainda esconde detalhes do rosto
+const BLUR_SIGMA = 5; // reduzido de 12: um cliente relatou "o preview não me dá noção nenhuma" — com
+                      // blur forte a pessoa não consegue julgar a QUALIDADE e por isso não compra.
+                      // A proteção contra uso sem pagar continua vindo da marca d'água + resolução
+                      // baixa (PREVIEW_WIDTH), não do borrão.
 
 // ---------------------------------------------------------------------------
 // A marca d'água NÃO é mais desenhada como texto SVG em tempo de requisição.
