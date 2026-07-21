@@ -189,12 +189,37 @@ router.get('/admin/leads', async (req, res) => {
   const adminKey = process.env.ADMIN_KEY;
   if (!adminKey || req.query.key !== adminKey) return res.status(403).json({ error: 'Acesso negado.' });
 
+  // O status precisa olhar TAMBEM o arquivo em disco, nao so a memoria.
+  // Antes so consultava o orderStore (TTL de 2h) e por isso TODO lead com
+  // mais de 2 horas aparecia como "expirado_da_memoria" — inclusive quem
+  // tinha comprado. O relatorio dava a entender que ninguem converteu.
   const leads = await leadStore.listLeads();
-  const enriched = leads.map((lead) => {
-    const live = orderStore.getOrder(lead.orderId);
-    return { ...lead, statusAtual: live ? live.status : 'expirado_da_memoria' };
+  const enriched = await Promise.all(
+    leads.map(async (lead) => {
+      const live = orderStore.getOrder(lead.orderId) || (await photoArchive.loadOrder(lead.orderId));
+      let statusAtual;
+      if (!live) statusAtual = 'sem_registro';           // saiu da memoria e nao foi pago
+      else if (live.status === 'paid') statusAtual = 'pago';
+      else statusAtual = 'aguardando_pagamento';
+
+      // Pra quem pagou, ja devolve o link pronto — e o que o suporte precisa
+      // colar no WhatsApp quando o cliente diz que perdeu as fotos.
+      const base = `${req.protocol}://${req.get('host')}`;
+      return {
+        ...lead,
+        statusAtual,
+        linkDasFotos: statusAtual === 'pago' ? `${base}/?pedido=${lead.orderId}` : null,
+      };
+    })
+  );
+
+  const pagos = enriched.filter((l) => l.statusAtual === 'pago').length;
+  res.json({
+    total: enriched.length,
+    pagos,
+    naoConverteram: enriched.length - pagos,
+    leads: enriched,
   });
-  res.json({ total: enriched.length, leads: enriched });
 });
 
 // Baixa TODAS as fotos do pedido num único ZIP — a ação principal da tela de
