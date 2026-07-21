@@ -3227,6 +3227,14 @@ function fillLoopTrack(track, buildOneCopyHtml){
     frame.classList.add('unlocked');
     document.getElementById('lockChip').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg> Liberado';
     document.getElementById('unlockBtn').style.display = 'none';
+    // some com a escolha de pacote e o timer: a compra ja aconteceu — esta
+    // tela agora e de ENTREGA, nao de venda (o upsell tem a propria secao)
+    var pkgList = document.getElementById('pkgList');
+    if(pkgList) pkgList.style.display = 'none';
+    var offerLabel = document.querySelector('.price-offer-label');
+    if(offerLabel) offerLabel.style.display = 'none';
+    var timerWrap = document.querySelector('.promo-timer-wrap');
+    if(timerWrap) timerWrap.style.display = 'none';
     document.getElementById('downloadBtn').style.display = 'block';
     document.getElementById('downloadExpiryNote').style.display = 'block';
     // "Baixar todas" só faz sentido pra quem tem mais de uma foto (Pacote Premium)
