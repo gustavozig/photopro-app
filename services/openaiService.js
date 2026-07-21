@@ -21,7 +21,13 @@ async function cropTo4x5(buffer) {
   const targetRatio = FINAL_WIDTH / FINAL_HEIGHT; // 0.8
   let cropHeight = Math.round(width / targetRatio);
   if (cropHeight > height) cropHeight = height; // salvaguarda se a API devolver algo mais baixo que o esperado
-  const top = Math.round((height - cropHeight) / 2); // corta simetricamente topo/base — o rosto já vem centralizado pelo prompt
+  // Corta ASSIMETRICAMENTE: só 20% do excesso sai do topo e 80% sai de
+  // baixo. O rosto/cabeça ficam na metade superior do retrato 2:3, então o
+  // corte simétrico (50/50) estava decapitando o topo da cabeça em boa
+  // parte das fotos — reclamação real de cliente. Peito/torso aguentam
+  // perder mais sem prejuízo nenhum ao enquadramento de retrato.
+  const excess = height - cropHeight;
+  const top = Math.round(excess * 0.2);
   return sharp(buffer)
     .extract({ left: 0, top, width, height: cropHeight })
     .resize(FINAL_WIDTH, FINAL_HEIGHT)

@@ -44,6 +44,10 @@ Framing (must be consistent every time):
 - Face centered horizontally, eyes positioned around the upper third of the frame, face
   occupying roughly 35-45% of the frame height — not an extreme close-up, not a distant/
   full-body shot.
+- MANDATORY headroom: the ENTIRE head, including all of the hair, must be fully inside the
+  frame, with clear empty space above the hair of roughly 8-12% of the frame height. Never
+  crop, clip, or touch the top of the head/hair with the frame edge — if in doubt, zoom out
+  slightly and leave more headroom.
 - Both shoulders visible and level, camera at eye level, subject looking directly at the
   camera with a natural, relaxed expression (no forced smile).
 - Sharp focus on the face, shallow depth of field on the background.
