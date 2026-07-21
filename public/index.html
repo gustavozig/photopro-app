@@ -819,10 +819,39 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
   background:var(--gold);display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s;
 }
 .bump-checkbox svg{width:12px;height:12px;color:#1a1206;display:block;}
-.bump-card.off .bump-checkbox{background:transparent;}
+/* Estado DESMARCADO (padrao). O bump nao vem mais marcado: caixa pre-marcada
+   que adiciona custo e considerada pratica abusiva pelo CDC (art. 39) e ja
+   gerou reclamacao de cliente que viu R$9,90 na pagina e R$19,80 no checkout.
+   Por isso o "off" nao apaga mais o card - ele continua dourado e chamativo,
+   com um anel pulsando na caixa, pra ficar claro que e uma oferta disponivel
+   e nao um item desativado. Quem quiser, marca. */
+.bump-card.off .bump-checkbox{background:transparent;animation:bumpPulse 2.2s ease-out infinite;}
 .bump-card.off .bump-checkbox svg{display:none;}
-.bump-card.off{border-color:var(--border);background:var(--card-2);}
-.bump-card.off .bump-title,.bump-card.off .bump-badge{color:var(--muted);}
+@keyframes bumpPulse{
+  0%{box-shadow:0 0 0 0 rgba(245,196,81,.55);}
+  70%{box-shadow:0 0 0 8px rgba(245,196,81,0);}
+  100%{box-shadow:0 0 0 0 rgba(245,196,81,0);}
+}
+@media (prefers-reduced-motion:reduce){
+  .bump-card.off .bump-checkbox{animation:none;}
+}
+/* Estado MARCADO: confirma a escolha com borda e fundo mais fortes. */
+.bump-card:not(.off){
+  border-color:rgba(245,196,81,.75);
+  background:linear-gradient(135deg,rgba(245,196,81,.18),rgba(245,196,81,.07));
+}
+/* Dica "toque para adicionar" (so aparece desmarcado) e selo "Adicionado"
+   (so aparece marcado) - o cliente sempre sabe em que estado esta. */
+.bump-hint{
+  display:none;font-size:11px;font-weight:600;color:var(--gold);
+  margin:8px 0 0;text-align:center;
+}
+.bump-card.off .bump-hint{display:block;}
+.bump-added{
+  display:none;font-size:11px;font-weight:700;color:#1a1206;background:var(--gold);
+  border-radius:6px;padding:5px 8px;margin:8px 0 0;text-align:center;
+}
+.bump-card:not(.off) .bump-added{display:block;}
 .bump-title{font-size:13.5px;font-weight:700;color:var(--gold);line-height:1.3;margin:0;}
 .bump-badge{font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;margin-left:auto;padding-left:8px;}
 .bump-copy{font-size:11.5px;color:var(--muted);margin:6px 0 8px;line-height:1.4;}
@@ -1497,16 +1526,18 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
       <p class="desc" id="modalPayDesc">Pague direto por aqui, sem sair do site — cartão ou Pix.</p>
       <div class="pay-total">
         <span>Total</span>
-        <strong id="payTotalValue">R$ 19,80</strong>
+        <strong id="payTotalValue">R$ 9,90</strong>
       </div>
 
       <!-- Order bump "Pacote Premium": desbloqueia os outros 4 estilos do
            catálogo (que tem só 5 no total) por +R$ 9,90 — "pacote completo"
-           é literal aqui. Vem marcado por padrão (id="bumpCard" sem classe
-           "off") — o total já nasce em R$ 19,80 e o preço muda pra R$ 9,90
-           se o cliente desmarcar. O estado é lido em bumpSelected() na hora
-           de montar o payload do pagamento (ver mais abaixo). -->
-      <div class="bump-card" id="bumpCard">
+           é literal aqui. Vem DESMARCADO por padrão (classe "off"): o total
+           nasce em R$ 9,90, igual ao anunciado na página, e só sobe pra
+           R$ 19,80 se o cliente marcar. Antes vinha marcado e isso gerou
+           reclamação ("fui pagar R$9,90 e passou para R$19,80") além de ser
+           prática abusiva pelo CDC art. 39. O estado é lido em bumpSelected
+           na hora de montar o payload do pagamento (ver mais abaixo). -->
+      <div class="bump-card off" id="bumpCard">
         <div class="bump-head" id="bumpHead">
           <span class="bump-checkbox" id="bumpCheckbox">
             <svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5L9.5 17L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1523,6 +1554,8 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
           <li><span>✅</span> Versões prontas para LinkedIn, currículo e WhatsApp</li>
         </ul>
         <p class="bump-urgency">Disponível somente durante este pagamento.</p>
+        <p class="bump-hint">👆 Toque para adicionar ao seu pedido</p>
+        <p class="bump-added">✓ Pacote Premium adicionado — total R$ 19,80</p>
       </div>
 
       <!-- Checkout customizado (Checkout Transparente da MP) — 100% no design
@@ -1606,7 +1639,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
           <input type="email" id="cardEmail" placeholder="seu@email.com" autocomplete="email">
         </div>
         <p class="cf-error" id="cfError" style="display:none;"></p>
-        <button type="button" class="btn btn-primary btn-block" id="cardSubmitBtn">Pagar R$ 19,80</button>
+        <button type="button" class="btn btn-primary btn-block" id="cardSubmitBtn">Pagar R$ 9,90</button>
         <p class="cf-secure-note">
           <svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V11" stroke="currentColor" stroke-width="1.8"/></svg>
           Dados do cartão criptografados pelo Mercado Pago
@@ -2630,7 +2663,9 @@ function fillLoopTrack(track, buildOneCopyHtml){
   });
 
   // ---- Order bump "Pacote Premium" — vem marcado por padrão ----
-  var bumpSelected = true;
+  // Comeca DESMARCADO, casando com a classe "off" no HTML e com o preco de
+  // R$ 9,90 anunciado na pagina. Ver comentario no bloco do #bumpCard.
+  var bumpSelected = false;
   function formatBRL(value){
     return 'R$ ' + value.toFixed(2).replace('.', ',');
   }
@@ -2644,6 +2679,12 @@ function fillLoopTrack(track, buildOneCopyHtml){
   }
   function updateBumpUI(){
     bumpCard.classList.toggle('off', !bumpSelected);
+    // selo de confirmação com o total real, montado a partir dos preços em
+    // vez de texto fixo (se o preço mudar, a mensagem acompanha)
+    var bumpAdded = bumpCard.querySelector('.bump-added');
+    if(bumpAdded){
+      bumpAdded.textContent = '✓ Pacote Premium adicionado — total ' + formatBRL(currentTotalBRL());
+    }
     if(payTotalValue){
       payTotalValue.textContent = formatBRL(currentTotalBRL());
       payTotalValue.classList.toggle('bump-active', bumpSelected);
@@ -2755,7 +2796,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
       bumpCard.style.display = '';
       document.querySelector('#modalPayForm h3').textContent = 'Pagamento único';
       document.getElementById('modalPayDesc').textContent = 'Pague direto por aqui, sem sair do site — cartão ou Pix.';
-      bumpSelected = true; // cada nova tentativa de checkout começa com o bump marcado
+      bumpSelected = false; // cada nova tentativa de checkout começa sem o bump, como a página anuncia
       updateBumpUI();
     }
   }
