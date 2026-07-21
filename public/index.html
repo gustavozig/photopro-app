@@ -768,6 +768,42 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
 }
 .order-link-copy.done{background:#8ef0c0;}
 .result-col{display:flex;flex-direction:column;gap:10px;}
+/* Escada de pacotes na tela de resultado. O Premium (dourado) herda a
+   identidade visual do antigo order bump; o estado selecionado é marcado
+   por borda verde + radio preenchido — sempre óbvio o que está escolhido. */
+.pkg-list{display:flex;flex-direction:column;gap:10px;margin:12px 0 14px;}
+.pkg-card{
+  position:relative;border:1px solid var(--border);border-radius:12px;
+  padding:12px 13px;cursor:pointer;background:var(--card-2);
+  transition:border-color .15s,background .15s;
+}
+.pkg-card:hover{border-color:var(--muted);}
+.pkg-card.selected{border-color:var(--green);background:rgba(47,227,139,.06);}
+.pkg-gold{
+  border-color:rgba(245,196,81,.45);
+  background:linear-gradient(135deg,rgba(245,196,81,.10),rgba(245,196,81,.04));
+}
+.pkg-gold.selected{border-color:#f5c451;background:linear-gradient(135deg,rgba(245,196,81,.16),rgba(245,196,81,.06));}
+.pkg-flag{
+  position:absolute;top:-9px;left:12px;font-size:9.5px;font-weight:800;
+  letter-spacing:.04em;background:#f5c451;color:#1a1206;border-radius:999px;
+  padding:2px 9px;white-space:nowrap;
+}
+.pkg-head{display:flex;align-items:center;gap:9px;}
+.pkg-radio{
+  flex-shrink:0;width:17px;height:17px;border-radius:50%;
+  border:2px solid var(--muted-2);transition:border-color .15s,box-shadow .15s;
+}
+.pkg-card.selected .pkg-radio{border-color:var(--green);box-shadow:inset 0 0 0 4px var(--green);}
+.pkg-gold.selected .pkg-radio{border-color:#f5c451;box-shadow:inset 0 0 0 4px #f5c451;}
+.pkg-name{font-size:14px;font-weight:700;color:var(--text);}
+.pkg-gold .pkg-name{color:#f5c451;}
+.pkg-price{margin-left:auto;font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;}
+.pkg-desc{font-size:11.5px;color:var(--muted);margin:7px 0 0;line-height:1.45;}
+.pkg-save{
+  font-size:10.5px;font-weight:600;color:var(--green);margin:6px 0 0;
+}
+.pkg-gold .pkg-save{color:#f5c451;}
 .price-old{color:var(--muted-2);text-decoration:line-through;font-size:16px;}
 .price-row{display:flex;align-items:baseline;gap:10px;margin:6px 0 4px;flex-wrap:wrap;}
 .price-new{font-size:44px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;}
@@ -1431,20 +1467,46 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
               </div>
             </div>
             <h3 class="price-card-title">Ficou incrível!</h3>
-            <div class="price-offer-label">Oferta de lançamento</div>
-            <div class="price-old">R$ 29,90</div>
-            <div class="price-row">
-              <span class="price-new">R$ 9,90</span>
-              <span class="price-tag">67% OFF</span>
+            <div class="price-offer-label">Escolha seu pacote</div>
+
+            <!-- Escada de pacotes. A escolha aqui define o total do checkout
+                 (o servidor recalcula tudo pelo ID — ver mercadoPagoService).
+                 Premium vem selecionado como recomendação visível: os 3
+                 preços ficam lado a lado e o botão sempre mostra o total
+                 exato antes de qualquer pagamento — nada de valor surpresa. -->
+            <div class="pkg-list" id="pkgList">
+              <div class="pkg-card" data-pkg="inicial" role="button" tabindex="0">
+                <div class="pkg-head">
+                  <span class="pkg-radio"></span>
+                  <span class="pkg-name">Pacote Inicial</span>
+                  <span class="pkg-price">R$ 9,90</span>
+                </div>
+                <p class="pkg-desc">1 foto profissional no estilo que você escolheu</p>
+              </div>
+
+              <div class="pkg-card pkg-gold selected" data-pkg="premium" role="button" tabindex="0">
+                <span class="pkg-flag">⭐ MAIS ESCOLHIDO</span>
+                <div class="pkg-head">
+                  <span class="pkg-radio"></span>
+                  <span class="pkg-name">Pacote Premium</span>
+                  <span class="pkg-price">R$ 24,90</span>
+                </div>
+                <p class="pkg-desc">4 fotos: o estilo que você escolheu + 3 estilos diferentes</p>
+                <p class="pkg-save">Avulsas custariam R$ 39,60 — você economiza R$ 14,70</p>
+              </div>
+
+              <div class="pkg-card pkg-deluxe" data-pkg="deluxe" role="button" tabindex="0">
+                <div class="pkg-head">
+                  <span class="pkg-radio"></span>
+                  <span class="pkg-name">Deluxe Estúdio™</span>
+                  <span class="pkg-price">R$ 79,90</span>
+                </div>
+                <p class="pkg-desc">Sessão completa com 10 fotos: tudo do Premium + 5 fotos exclusivas de estúdio (P&amp;B, mesa de diretor, poses profissionais)</p>
+                <p class="pkg-save">Uma sessão de estúdio real custa a partir de R$ 200 — aqui, menos de R$ 8 por foto</p>
+              </div>
             </div>
-            <p class="price-fine-print"><strong style="color:var(--text);">R$ 9,90 libera esta foto</strong><br>Pagamento único, sem assinatura.</p>
-            <ul class="price-list">
-              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Esta foto em alta resolução, pronta pra baixar</li>
-              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Preserva sua identidade</li>
-              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Sem marca d'água</li>
-              <li><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L10 18L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Download imediato após o pagamento</li>
-            </ul>
-            <button class="btn btn-primary btn-block" id="unlockBtn">Desbloquear Minha Foto Agora</button>
+
+            <button class="btn btn-primary btn-block" id="unlockBtn">Desbloquear — R$ 24,90</button>
             <p class="price-trust-note">🔒 Pagamento seguro • Compra única • Sem assinatura</p>
             <button class="btn btn-primary btn-block" id="downloadAllBtn" style="display:none;margin-top:10px;">Baixar todas as fotos (ZIP)</button>
             <button class="btn btn-ghost btn-block" id="downloadBtn" style="display:none;margin-top:10px;">Baixar só esta foto</button>
@@ -1470,8 +1532,8 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
              fica liberada normalmente nesse meio-tempo (ver revealPaidResult). -->
         <div class="bump-gallery-section" id="bumpGallerySection" style="display:none;">
           <div class="bump-gallery-head">
-            <h3>🎁 Seu Pacote Premium</h3>
-            <p id="bumpGalleryStatus">Gerando suas outras 4 fotos, só um instante...</p>
+            <h3 id="bumpGalleryTitle">🎁 Seu Pacote Premium</h3>
+            <p id="bumpGalleryStatus">Gerando suas outras fotos, só um instante...</p>
           </div>
           <div class="bump-gallery-grid" id="bumpGalleryGrid"></div>
         </div>
@@ -1484,18 +1546,18 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
         <div class="bump-gallery-section" id="upsellOfferSection" style="display:none;">
           <div class="bump-card" style="cursor:default;">
             <div class="bump-head" style="cursor:default;">
-              <span class="bump-title">⭐ Ainda dá tempo de completar seu Pacote Premium</span>
-              <span class="bump-badge">+R$ 9,90</span>
+              <span class="bump-title">⭐ Ainda dá tempo de virar Pacote Premium</span>
+              <span class="bump-badge">+R$ 15,00</span>
             </div>
-            <p class="bump-copy">Você levou só 1 foto. Desbloqueie as outras 4 variações de estilo geradas a partir da mesma selfie — sem precisar enviar nada de novo.</p>
+            <p class="bump-copy">Você levou o Pacote Inicial. Complete o Premium pagando só a diferença: mais 3 fotos em estilos diferentes, geradas da mesma selfie — sem enviar nada de novo.</p>
             <ul class="bump-benefits">
-              <li><span>✅</span> Mais 4 fotos profissionais em alta resolução</li>
-              <li><span>✅</span> Pacote completo com 5 estilos</li>
+              <li><span>✅</span> Mais 3 fotos profissionais em alta resolução</li>
+              <li><span>✅</span> Pacote com 4 estilos no total</li>
               <li><span>✅</span> Fundos e iluminação premium</li>
               <li><span>✅</span> Versões prontas para LinkedIn, currículo e WhatsApp</li>
             </ul>
             <p class="bump-urgency" id="upsellExpiryNote">⏳ Disponível só enquanto sua selfie ainda estiver no sistema (até 2h após a compra).</p>
-            <button class="btn btn-primary btn-block" id="upsellUnlockBtn" style="margin-top:14px;">Desbloquear Pacote Premium (+R$ 9,90)</button>
+            <button class="btn btn-primary btn-block" id="upsellUnlockBtn" style="margin-top:14px;">Completar Pacote Premium (+R$ 15,00)</button>
           </div>
         </div>
 
@@ -1529,33 +1591,20 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
         <strong id="payTotalValue">R$ 9,90</strong>
       </div>
 
-      <!-- Order bump "Pacote Premium": desbloqueia os outros 4 estilos do
-           catálogo (que tem só 5 no total) por +R$ 9,90 — "pacote completo"
-           é literal aqui. Vem DESMARCADO por padrão (classe "off"): o total
-           nasce em R$ 9,90, igual ao anunciado na página, e só sobe pra
-           R$ 19,80 se o cliente marcar. Antes vinha marcado e isso gerou
-           reclamação ("fui pagar R$9,90 e passou para R$19,80") além de ser
-           prática abusiva pelo CDC art. 39. O estado é lido em bumpSelected
-           na hora de montar o payload do pagamento (ver mais abaixo). -->
+      <!-- Bump do checkout: download em qualidade máxima (+R$ 2,90).
+           A escolha do PACOTE já foi feita na tela anterior — aqui só existe
+           este extra simples. Vem desmarcado (CDC art. 39) e a diferença é
+           real: sem ele os downloads saem em JPEG otimizado; com ele, nos
+           PNG originais sem compressão (ver routes/orders.js). -->
       <div class="bump-card off" id="bumpCard">
         <div class="bump-head" id="bumpHead">
           <span class="bump-checkbox" id="bumpCheckbox">
             <svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5L9.5 17L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </span>
-          <span class="bump-title">⭐ Desbloqueie o Pacote Premium por apenas +R$ 9,90</span>
-          <span class="bump-badge">+R$ 9,90</span>
+          <span class="bump-title">Baixar minhas fotos em qualidade máxima (PNG)</span>
+          <span class="bump-badge">+R$ 2,90</span>
         </div>
-        <p class="bump-copy">Aproveite esta oferta exclusiva e receba muito mais opções para escolher sua foto perfeita.</p>
-        <ul class="bump-benefits">
-          <li><span>✅</span> Mais 4 fotos profissionais em alta resolução</li>
-          <li><span>✅</span> Pacote completo com 5 estilos</li>
-          <li><span>✅</span> Fundos premium</li>
-          <li><span>✅</span> Iluminação profissional</li>
-          <li><span>✅</span> Versões prontas para LinkedIn, currículo e WhatsApp</li>
-        </ul>
-        <p class="bump-urgency">Disponível somente durante este pagamento.</p>
-        <p class="bump-hint">👆 Toque para adicionar ao seu pedido</p>
-        <p class="bump-added">✓ Pacote Premium adicionado — total R$ 19,80</p>
+        <p class="bump-copy">Sem isso, você baixa normalmente em JPEG otimizado — leve e ótimo pra WhatsApp e LinkedIn. Com isso, recebe os arquivos PNG originais, sem nenhuma compressão.</p>
       </div>
 
       <!-- Checkout customizado (Checkout Transparente da MP) — 100% no design
@@ -2654,67 +2703,83 @@ function fillLoopTrack(track, buildOneCopyHtml){
     if(typeof window.fbq !== 'function') return;
     window.fbq('trackCustom', eventName, params || {});
   }
-  var sitePriceBRL = 9.90;
-  var bumpPriceBRL = 9.90; // order bump "Pacote Premium" — o valor real cobrado é sempre recalculado no servidor
+  // ---- Pacotes e bump HQ — precos so pra EXIBICAO ----
+  // O valor cobrado e SEMPRE recalculado no servidor a partir dos IDs
+  // (mercadoPagoService.PACKAGES) — estes numeros so pintam a tela.
+  var PKG_PRICES = { inicial: 9.90, premium: 24.90, deluxe: 79.90 };
+  var UPGRADE_PRICE = 15.00; // upsell pos-compra inicial -> premium (24,90 - 9,90)
+  var HQ_PRICE = 2.90;       // bump do checkout: download em PNG maxima qualidade
+  var selectedPackage = 'premium'; // card destacado "mais escolhido" ja vem selecionado
+  var hqSelected = false;          // bump HQ comeca desmarcado (CDC art. 39)
+  var sitePriceBRL = PKG_PRICES.inicial; // usado por eventos legados do pixel
+
   getMpConfig().then(function(cfg){
-    if(cfg && cfg.priceBRL) sitePriceBRL = cfg.priceBRL;
     if(cfg && cfg.metaPixelId) initMetaPixel(cfg.metaPixelId);
     updateBumpUI();
   });
 
-  // ---- Order bump "Pacote Premium" — vem marcado por padrão ----
-  // Comeca DESMARCADO, casando com a classe "off" no HTML e com o preco de
-  // R$ 9,90 anunciado na pagina. Ver comentario no bloco do #bumpCard.
-  var bumpSelected = false;
   function formatBRL(value){
     return 'R$ ' + value.toFixed(2).replace('.', ',');
   }
   function currentTotalBRL(){
-    return sitePriceBRL + (bumpSelected ? bumpPriceBRL : 0);
+    return PKG_PRICES[selectedPackage] + (hqSelected ? HQ_PRICE : 0);
   }
-  // total exibido/cobrado no modal — no upsell pós-compra é sempre só o
-  // valor do bump, fixo (não passa pelo checkbox do bumpSelected).
+  // total exibido/cobrado no modal — no upsell pos-compra e sempre so a
+  // diferenca do upgrade (nao passa pelos pacotes nem pelo bump HQ).
   function payButtonTotalBRL(){
-    return isUpsellCheckout ? bumpPriceBRL : currentTotalBRL();
+    return isUpsellCheckout ? UPGRADE_PRICE : currentTotalBRL();
   }
   function updateBumpUI(){
-    bumpCard.classList.toggle('off', !bumpSelected);
-    // selo de confirmação com o total real, montado a partir dos preços em
-    // vez de texto fixo (se o preço mudar, a mensagem acompanha)
-    var bumpAdded = bumpCard.querySelector('.bump-added');
-    if(bumpAdded){
-      bumpAdded.textContent = '✓ Pacote Premium adicionado — total ' + formatBRL(currentTotalBRL());
-    }
+    bumpCard.classList.toggle('off', !hqSelected);
     if(payTotalValue){
       payTotalValue.textContent = formatBRL(currentTotalBRL());
-      payTotalValue.classList.toggle('bump-active', bumpSelected);
+      payTotalValue.classList.toggle('bump-active', hqSelected);
     }
     var cardBtn = document.getElementById('cardSubmitBtn');
-    // não sobrescreve o texto do botão enquanto ele está em estado de
-    // "Processando..." (evita um flash de preço no meio do envio)
+    // nao sobrescreve o texto do botao enquanto ele esta em estado de
+    // "Processando..." (evita um flash de preco no meio do envio)
     if(cardBtn && !cardBtn.disabled){
       cardBtn.textContent = 'Pagar ' + formatBRL(currentTotalBRL());
     }
   }
   if(bumpHead){
     bumpHead.addEventListener('click', function(){
-      bumpSelected = !bumpSelected;
+      hqSelected = !hqSelected;
       updateBumpUI();
     });
   }
+
+  // ---- selecao de pacote na tela de resultado ----
+  (function ligarCardsDePacote(){
+    var list = document.getElementById('pkgList');
+    var unlockBtn = document.getElementById('unlockBtn');
+    if(!list) return;
+    function selecionar(card){
+      list.querySelectorAll('.pkg-card').forEach(function(c){ c.classList.remove('selected'); });
+      card.classList.add('selected');
+      selectedPackage = card.getAttribute('data-pkg') || 'premium';
+      if(unlockBtn) unlockBtn.textContent = 'Desbloquear — ' + formatBRL(PKG_PRICES[selectedPackage]);
+      updateBumpUI(); // total do modal acompanha, caso ja esteja aberto
+    }
+    list.querySelectorAll('.pkg-card').forEach(function(card){
+      card.addEventListener('click', function(){ selecionar(card); });
+      card.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); selecionar(card); }
+      });
+    });
+  })();
   var checkoutEventFired = false;
   function fireInitiateCheckoutOnce(){
     if(checkoutEventFired || !currentOrderId) return;
     checkoutEventFired = true;
-    metaTrackStandard('InitiateCheckout', { value: sitePriceBRL, currency: 'BRL' }, 'checkout_' + currentOrderId);
+    metaTrackStandard('InitiateCheckout', { value: PKG_PRICES[selectedPackage], currency: 'BRL' }, 'checkout_' + currentOrderId);
   }
   var purchaseEventFired = false;
   function firePurchaseOnce(orderId){
     if(purchaseEventFired) return;
     purchaseEventFired = true;
-    // currentTotalBRL() reflete o bump se ele estava marcado no momento do
-    // envio do pagamento (bumpSelected só muda de novo num reset do modal,
-    // que só acontece numa nova tentativa de checkout).
+    // currentTotalBRL() reflete o pacote + bump HQ do momento do envio do
+    // pagamento (só mudam de novo num reset do modal, em nova tentativa).
     metaTrackStandard('Purchase', { value: currentTotalBRL(), currency: 'BRL' }, 'purchase_' + orderId);
   }
 
@@ -2784,19 +2849,19 @@ function fillLoopTrack(track, buildOneCopyHtml){
     cardBtn.disabled = false;
 
     if(isUpsellCheckout){
-      // upsell pós-compra: sem checkbox de bump (o pacote inteiro já É a
-      // oferta), total fixo = só o valor do bump.
+      // upsell pós-compra: upgrade Inicial → Premium pela diferença de
+      // preço — sem cards de pacote nem bump HQ, total fixo.
       bumpCard.style.display = 'none';
-      document.querySelector('#modalPayForm h3').textContent = 'Pacote Premium';
-      document.getElementById('modalPayDesc').textContent = 'Desbloqueie as outras 4 fotos do seu pacote — cartão ou Pix, sem sair do site.';
-      payTotalValue.textContent = formatBRL(bumpPriceBRL);
+      document.querySelector('#modalPayForm h3').textContent = 'Upgrade para o Pacote Premium';
+      document.getElementById('modalPayDesc').textContent = 'Complete seu pacote com as outras 3 fotos pagando só a diferença — cartão ou Pix, sem sair do site.';
+      payTotalValue.textContent = formatBRL(UPGRADE_PRICE);
       payTotalValue.classList.remove('bump-active');
-      cardBtn.textContent = 'Pagar ' + formatBRL(bumpPriceBRL);
+      cardBtn.textContent = 'Pagar ' + formatBRL(UPGRADE_PRICE);
     } else {
       bumpCard.style.display = '';
       document.querySelector('#modalPayForm h3').textContent = 'Pagamento único';
       document.getElementById('modalPayDesc').textContent = 'Pague direto por aqui, sem sair do site — cartão ou Pix.';
-      bumpSelected = false; // cada nova tentativa de checkout começa sem o bump, como a página anuncia
+      hqSelected = false; // cada nova tentativa de checkout começa sem o bump HQ
       updateBumpUI();
     }
   }
@@ -2918,7 +2983,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
             clearInterval(paidPollInterval);
             closeModal();
             hideUpsellOffer();
-            pollBumpGallery(orderId);
+            pollBumpGallery(orderId, data.package);
           } else if(attempts > 40){
             clearInterval(paidPollInterval);
             processing.classList.remove('visible');
@@ -2998,7 +3063,8 @@ function fillLoopTrack(track, buildOneCopyHtml){
       body: JSON.stringify({
         payment_method_id: 'pix',
         deviceId: window.MP_DEVICE_SESSION_ID || null,
-        bump: isUpsellCheckout ? undefined : bumpSelected,
+        package: isUpsellCheckout ? undefined : selectedPackage,
+        hq: isUpsellCheckout ? undefined : hqSelected,
         payer: {
           email: email,
           first_name: n.firstName,
@@ -3062,7 +3128,8 @@ function fillLoopTrack(track, buildOneCopyHtml){
         payment_method_id: detectedPaymentMethodId,
         installments: 1,
         deviceId: window.MP_DEVICE_SESSION_ID || null,
-        bump: isUpsellCheckout ? undefined : bumpSelected,
+        package: isUpsellCheckout ? undefined : selectedPackage,
+        hq: isUpsellCheckout ? undefined : hqSelected,
         payer: {
           email: email,
           first_name: n.firstName,
@@ -3250,12 +3317,19 @@ function fillLoopTrack(track, buildOneCopyHtml){
   // dessa galeria terminar de gerar — não faz sentido segurar a entrega do
   // pedido base esperando o pacote inteiro.
   var bumpPollInterval = null;
-  function pollBumpGallery(orderId){
+  // Título e contagem seguem o pacote: premium = 3 extras, deluxe = 9.
+  // packageId chega do GET /orders/:id (serializeOrder) via revealPaidResult.
+  function pollBumpGallery(orderId, packageId){
     var section = document.getElementById('bumpGallerySection');
     var statusEl = document.getElementById('bumpGalleryStatus');
+    var titleEl = document.getElementById('bumpGalleryTitle');
     var grid = document.getElementById('bumpGalleryGrid');
     section.style.display = 'block';
-    statusEl.textContent = 'Gerando suas outras 4 fotos, só um instante...';
+    var isDeluxe = packageId === 'deluxe';
+    if(titleEl) titleEl.textContent = isDeluxe ? '📸 Sua Sessão Deluxe Estúdio™' : '🎁 Seu Pacote Premium';
+    statusEl.textContent = isDeluxe
+      ? 'Gerando suas outras 9 fotos da sessão — pode levar alguns minutos, vale a espera...'
+      : 'Gerando suas outras 3 fotos, só um instante...';
     grid.innerHTML = '<div class="bump-gallery-loading">Isso pode levar um minuto...</div>';
     if(bumpPollInterval) clearInterval(bumpPollInterval);
     var bumpAttempts = 0;
@@ -3274,7 +3348,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
             clearInterval(bumpPollInterval);
             statusEl.textContent = 'Não conseguimos gerar as fotos extras agora. Fale com o suporte informando o pedido ' + orderId + '.';
             grid.innerHTML = '';
-          } else if(bumpAttempts > 60){
+          } else if(bumpAttempts > (isDeluxe ? 200 : 60)){
             clearInterval(bumpPollInterval);
             statusEl.textContent = 'Está demorando mais que o esperado — atualize a página em instantes.';
           }
@@ -3341,7 +3415,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
             saveOrderForRecovery(orderId);
             revealPaidResult();
             if(data.bumpPurchased){
-              pollBumpGallery(orderId);
+              pollBumpGallery(orderId, data.package);
             } else {
               showUpsellOffer();
             }
@@ -3420,7 +3494,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
           saveOrderForRecovery(orderId); // passa a valer também neste aparelho
           revealPaidResult();
           if(data.bumpPurchased){
-            pollBumpGallery(orderId);
+            pollBumpGallery(orderId, data.package);
           } else {
             showUpsellOffer();
           }
@@ -3477,7 +3551,7 @@ function fillLoopTrack(track, buildOneCopyHtml){
           lastFullImage = data.fullImage;
           revealPaidResult();
           if(data.bumpPurchased){
-            pollBumpGallery(orderId);
+            pollBumpGallery(orderId, data.package);
           } else {
             showUpsellOffer();
           }

@@ -112,18 +112,98 @@ Wardrobe & setting for this version — "Blazer premium":
   from the front, premium editorial-portrait feel.`,
 };
 
+// ---------------------------------------------------------------------------
+// Sessão de estúdio — 5 fotos EXCLUSIVAS do pacote Deluxe Estúdio™.
+// Diferença pros estilos do catálogo: aqui variamos POSE e ENQUADRAMENTO
+// (não só roupa/fundo), simulando uma sessão de fotos real. Por isso cada
+// prompt traz um "Framing override" explícito: a seção de enquadramento do
+// IDENTITY_LOCK (busto centralizado, olhando pra câmera) é substituída — a
+// parte de preservação de identidade continua valendo integralmente.
+// ---------------------------------------------------------------------------
+const SESSION_PROMPTS = {
+  'Estúdio P&B': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Estúdio P&B" (black & white studio portrait):
+- Convert the final image to rich BLACK AND WHITE (true monochrome, deep blacks, detailed
+  midtones, no color cast) — like a classic editorial studio portrait.
+- Dress the subject in a dark blazer or elegant dark top, minimal and timeless.
+- Background: dark charcoal-to-black seamless studio backdrop with a subtle vignette.
+- Lighting: dramatic single key light (Rembrandt style) with soft fill, strong but flattering
+  shadows sculpting the face.
+Framing override for this session shot (replaces the framing section above):
+- Head-and-shoulders, subject turned slightly (about 20 degrees) with the face back toward
+  the camera, confident neutral expression, eyes to the lens.`,
+
+  'Mesa do diretor': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Mesa do diretor" (executive desk):
+- Dress the subject in a sharp tailored suit or executive attire.
+- Setting: seated at a large dark-wood executive desk in a corner office, softly blurred
+  floor-to-ceiling windows and a city skyline behind, warm late-afternoon light.
+- Pose: seated, leaning slightly forward with forearms resting on the desk, hands calmly
+  clasped, projecting approachable authority.
+Framing override for this session shot (replaces the framing section above):
+- Waist-up composition showing the desk edge and hands, camera at chest height, subject
+  looking directly at the camera with a subtle confident smile.`,
+
+  'Braços cruzados': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Braços cruzados" (arms crossed, half body):
+- Dress the subject in smart business-casual: blazer over a plain shirt/blouse, no tie.
+- Background: light-gray seamless studio backdrop, clean and minimal.
+- Pose: standing, arms confidently crossed, shoulders relaxed, natural upright posture.
+Framing override for this session shot (replaces the framing section above):
+- Half-body composition (from just below the elbows up), subject angled about 15 degrees,
+  face toward the camera, warm genuine smile, classic corporate-team-page look.`,
+
+  'Perfil editorial': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Perfil editorial" (side-lit editorial look):
+- Dress the subject in an elegant dark turtleneck or minimal dark top (editorial magazine style).
+- Background: deep neutral gray studio backdrop with a soft gradient.
+- Lighting: strong directional side light from one side, gently wrapping the face, the other
+  side falling into soft shadow — sophisticated magazine-profile feel, in color with muted
+  cinematic grading.
+Framing override for this session shot (replaces the framing section above):
+- Head-and-shoulders, subject's body turned about 45 degrees with the face turned back
+  toward the camera, thoughtful composed expression.`,
+
+  'Luz de janela': `${IDENTITY_LOCK}
+
+Wardrobe & setting for this version — "Luz de janela" (window light, candid-professional):
+- Dress the subject in refined business-casual (open blazer or quality knit).
+- Setting: standing beside a large office window with sheer curtains, soft natural daylight
+  as the only light source, blurred modern interior behind.
+- Pose: relaxed, one shoulder slightly toward the window, natural candid-professional energy.
+Framing override for this session shot (replaces the framing section above):
+- Chest-up composition, subject looking at the camera with a soft natural smile, gentle
+  window light illuminating one side of the face.`,
+};
+
 const DEFAULT_STYLE = 'Corporativo neutro';
 
 function getPromptForStyle(styleName) {
-  return STYLE_PROMPTS[styleName] || STYLE_PROMPTS[DEFAULT_STYLE];
+  return STYLE_PROMPTS[styleName] || SESSION_PROMPTS[styleName] || STYLE_PROMPTS[DEFAULT_STYLE];
 }
 
-// Usado pelo order bump ("Pacote Premium"): devolve os outros 4 estilos do
-// catálogo (todos exceto o que o cliente já escolheu no fluxo base), pra
-// completar o conjunto de 5 fotos prometido na oferta — o catálogo inteiro
-// tem só 5 estilos, então "pacote completo" aqui é literal.
+// Devolve os outros estilos do catálogo (todos exceto o escolhido).
 function getOtherStyles(styleName) {
   return Object.keys(STYLE_PROMPTS).filter((name) => name !== styleName);
 }
 
-module.exports = { getPromptForStyle, getOtherStyles, STYLE_PROMPTS, DEFAULT_STYLE };
+// ---------------------------------------------------------------------------
+// Fotos EXTRAS de cada pacote (além da foto principal no estilo escolhido):
+// - inicial: nenhuma (só a foto principal)
+// - premium: os outros 3 estilos do seletor ('Blazer premium' fica de fora —
+//   é exclusivo do Deluxe, pra escada de valor ter degraus reais)
+// - deluxe: os outros 4 do catálogo (incluindo 'Blazer premium') + as 5
+//   fotos de sessão de estúdio = 9 extras, 10 fotos no total
+// ---------------------------------------------------------------------------
+function getExtraStylesForPackage(packageId, chosenStyle) {
+  const others = getOtherStyles(chosenStyle);
+  if (packageId === 'deluxe') return [...others, ...Object.keys(SESSION_PROMPTS)];
+  if (packageId === 'premium') return others.filter((n) => n !== 'Blazer premium').slice(0, 3);
+  return [];
+}
+
+module.exports = { getPromptForStyle, getOtherStyles, getExtraStylesForPackage, STYLE_PROMPTS, SESSION_PROMPTS, DEFAULT_STYLE };

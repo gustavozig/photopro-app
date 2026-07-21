@@ -5,7 +5,7 @@ const photoArchive = require('../services/photoArchive');
 const mercadoPagoService = require('../services/mercadoPagoService');
 const openaiService = require('../services/openaiService');
 const metaCapiService = require('../services/metaCapiService');
-const { getOtherStyles } = require('../prompts');
+const { getExtraStylesForPackage } = require('../prompts');
 
 const router = express.Router();
 
@@ -56,13 +56,15 @@ router.post('/webhooks/mercadopago', async (req, res) => {
         // tiver sido processado antes (evita reprocessar em notificações
         // duplicadas da MP).
         if (!order.bumpPurchased) {
-          orderStore.updateOrder(order.id, { bumpPurchased: true });
+          // Upgrade Inicial → Premium: muda o pacote do pedido, e a geração
+          // das extras passa a seguir a lista do premium (3 fotos).
+          orderStore.updateOrder(order.id, { bumpPurchased: true, package: 'premium' });
           res.status(200).end();
           runBumpGenerationInBackground(order.id);
           const publicUrl = req.app.get('publicUrl');
           metaCapiService.sendPurchaseEvent({
             orderId: `${order.id}-upsell`,
-            value: mercadoPagoService.BUMP_PRICE_BRL,
+            value: mercadoPagoService.UPGRADE_PRICE_BRL,
             email: payment.payer?.email || null,
             phone: order.whatsapp,
             clientIp: order.clientIp,
@@ -85,9 +87,10 @@ router.post('/webhooks/mercadopago', async (req, res) => {
         // event_id usa o mesmo formato disparado pelo pixel no navegador
         // (index.html, dentro de pollUntilPaid) pra o Meta deduplicar.
         const publicUrl = req.app.get('publicUrl');
-        const purchaseValue = order.bumpPurchased
-          ? mercadoPagoService.PRICE_BRL + mercadoPagoService.BUMP_PRICE_BRL
-          : mercadoPagoService.PRICE_BRL;
+        const pkg = mercadoPagoService.PACKAGES[mercadoPagoService.resolvePackage(order.package)];
+        const purchaseValue = Number(
+          (pkg.price + (order.hqPurchased ? mercadoPagoService.HQ_PRICE_BRL : 0)).toFixed(2)
+        );
         metaCapiService.sendPurchaseEvent({
           orderId: order.id,
           value: purchaseValue,
@@ -165,17 +168,16 @@ async function runGenerationInBackground(orderId) {
 }
 
 // ---------------------------------------------------------------------------
-// Order bump "Pacote Premium": gera as outras 4 variações de estilo (todo o
-// catálogo de prompts.js exceto o estilo já escolhido no fluxo base) e
-// entrega como uma galeria adicional. Roda DEPOIS que a foto principal já
-// está pronta (o cliente não fica esperando o pacote inteiro pra ver o
-// resultado do pedido base) — o front-end faz polling de `bumpStatus`
-// separadamente (ver GET /api/orders/:id).
+// Fotos extras do pacote: premium = 3 estilos do catálogo, deluxe = 9 (os
+// outros 4 do catálogo + 5 fotos de sessão de estúdio exclusivas) — a lista
+// vem de getExtraStylesForPackage (prompts.js). Roda DEPOIS que a foto
+// principal já está pronta (o cliente não espera o pacote inteiro pra ver o
+// resultado base) — o front-end faz polling de `bumpStatus` separadamente.
 //
-// Usa um pool de concorrência limitada (não Promise.all direto) pra não
-// disparar 4 chamadas simultâneas à API da OpenAI de uma vez — reduz risco
-// de rate limit e picos de memória. Falhas individuais não derrubam o
-// pacote inteiro: entregamos o que conseguimos gerar (Promise.allSettled-like).
+// Pool de concorrência limitada (não Promise.all direto) pra não estourar
+// rate limit nem memória — com 3 workers, o deluxe (9 fotos) fica pronto em
+// ~3 levas em vez de 9 gerações em série. Falhas individuais não derrubam o
+// pacote: entregamos o que conseguimos gerar.
 // ---------------------------------------------------------------------------
 const BUMP_CONCURRENCY = 3;
 
@@ -203,8 +205,12 @@ async function runBumpGenerationInBackground(orderId) {
 
   orderStore.updateOrder(orderId, { bumpStatus: 'generating' });
 
-  const otherStyles = getOtherStyles(order.style); // os outros 4 estilos do catálogo
-  const results = await mapWithConcurrency(otherStyles, BUMP_CONCURRENCY, async (styleName) => {
+  const extraStyles = getExtraStylesForPackage(
+    mercadoPagoService.resolvePackage(order.package),
+    order.style
+  );
+  if (extraStyles.length === 0) return; // pacote inicial: nada a gerar
+  const results = await mapWithConcurrency(extraStyles, BUMP_CONCURRENCY, async (styleName) => {
     const imageBuffer = await openaiService.generateProfessionalPhoto(
       order.selfieBuffer,
       order.selfieMimeType,
@@ -216,7 +222,7 @@ async function runBumpGenerationInBackground(orderId) {
   const bumpImages = results.filter((r) => r.ok).map((r) => r.value);
   const failedCount = results.length - bumpImages.length;
   if (failedCount > 0) {
-    console.error(`[order ${orderId}] ${failedCount}/${results.length} fotos do Pacote Premium falharam na geração.`);
+    console.error(`[order ${orderId}] ${failedCount}/${results.length} fotos extras do pacote ${order.package} falharam na geração.`);
   }
 
   orderStore.updateOrder(orderId, {

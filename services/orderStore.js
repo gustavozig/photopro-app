@@ -38,9 +38,11 @@ const orders = new Map();
  * @property {string|null} clientIp - IP do cliente no momento do pedido (Meta CAPI)
  * @property {string|null} userAgent - User-Agent do navegador no momento do pedido (Meta CAPI)
  * @property {string|null} whatsapp - telefone opcional pra vincular o pedido (suporte + Advanced Matching do CAPI)
- * @property {boolean} bumpPurchased - true se o cliente comprou o order bump "Pacote Premium" (4 estilos extras)
- * @property {'pending'|'generating'|'ready'|'failed'|null} bumpStatus - status da geração dos 4 estilos extras (só relevante se bumpPurchased)
- * @property {Array<{style: string, imageBuffer: Buffer}>|null} bumpImages - as 4 fotos extras já geradas (prontas quando bumpStatus === 'ready')
+ * @property {'inicial'|'premium'|'deluxe'} package - pacote escolhido no checkout (define quantas fotos extras são geradas)
+ * @property {boolean} hqPurchased - true se comprou o bump "download em qualidade máxima" (PNG em vez de JPEG otimizado)
+ * @property {boolean} bumpPurchased - true se o pedido tem fotos extras (package premium/deluxe, ou upgrade pós-compra)
+ * @property {'pending'|'generating'|'ready'|'failed'|null} bumpStatus - status da geração das fotos extras (só relevante se bumpPurchased)
+ * @property {Array<{style: string, imageBuffer: Buffer}>|null} bumpImages - as fotos extras já geradas (prontas quando bumpStatus === 'ready')
  */
 
 function createOrder({ style, selfieBuffer, selfieMimeType, fbp, fbc, clientIp, userAgent }) {
@@ -61,6 +63,8 @@ function createOrder({ style, selfieBuffer, selfieMimeType, fbp, fbc, clientIp, 
     clientIp: clientIp || null,
     userAgent: userAgent || null,
     whatsapp: null, // telefone opcional informado na tela de loading (ver POST /orders/:id/contact)
+    package: 'inicial', // sobrescrito quando o pagamento é criado (routes/orders.js)
+    hqPurchased: false,
     bumpPurchased: false,
     bumpStatus: null,
     bumpImages: null,

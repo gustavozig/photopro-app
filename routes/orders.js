@@ -3,6 +3,7 @@ const multer = require('multer');
 
 const orderStore = require('../services/orderStore');
 const photoArchive = require('../services/photoArchive');
+const sharp = require('sharp');
 const { buildZip } = require('../services/zipBuilder');
 const leadStore = require('../services/leadStore');
 const mercadoPagoService = require('../services/mercadoPagoService');
@@ -43,6 +44,10 @@ function serializeOrder(order) {
     status: order.status,
     style: order.style,
     previewStatus: order.previewStatus,
+    // legado (pedidos arquivados antes dos pacotes): bumpPurchased sem
+    // package definido significa o antigo "Pacote Premium" completo
+    package: order.package || (order.bumpPurchased ? 'premium' : 'inicial'),
+    hqPurchased: !!order.hqPurchased,
     bumpPurchased: !!order.bumpPurchased,
   };
   if (order.error) out.error = order.error;
@@ -150,15 +155,27 @@ router.get('/orders/:id', async (req, res) => {
 // o clique termina em "A página não pode ser carregada". Servir o PNG por
 // uma URL http normal com attachment resolve em qualquer navegador.
 // ---------------------------------------------------------------------------
+// Converte pro formato de entrega conforme o bump HQ do pedido:
+// - com HQ (R$2,90): PNG original, sem compressão — exatamente o buffer gerado
+// - sem HQ: JPEG qualidade 88 — visualmente excelente (é o formato que
+//   WhatsApp/LinkedIn usam de qualquer jeito) e ~4x menor pra baixar no 4G.
+// A diferença é real: é isso que torna honesta a frase do checkout.
+async function deliverableImage(order, buffer) {
+  if (order.hqPurchased) return { data: buffer, ext: 'png', mime: 'image/png' };
+  const jpeg = await sharp(buffer).jpeg({ quality: 88, mozjpeg: true }).toBuffer();
+  return { data: jpeg, ext: 'jpg', mime: 'image/jpeg' };
+}
+
 router.get('/orders/:id/download', async (req, res) => {
   const order = orderStore.getOrder(req.params.id) || (await photoArchive.loadOrder(req.params.id));
   if (!order) return res.status(404).json({ error: 'Pedido não encontrado.' });
   if (order.status !== 'paid' || !order.fullImageBuffer) {
     return res.status(403).json({ error: 'Foto disponível somente após o pagamento.' });
   }
-  res.setHeader('Content-Type', 'image/png');
-  res.setHeader('Content-Disposition', 'attachment; filename="photopro-foto-profissional.png"');
-  res.send(order.fullImageBuffer);
+  const img = await deliverableImage(order, order.fullImageBuffer);
+  res.setHeader('Content-Type', img.mime);
+  res.setHeader('Content-Disposition', `attachment; filename="photopro-foto-profissional.${img.ext}"`);
+  res.send(img.data);
 });
 
 // ---------------------------------------------------------------------------
@@ -233,11 +250,14 @@ router.get('/orders/:id/download/all', async (req, res) => {
   }
 
   const slug = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const files = [{ name: `photopro-1-${slug(order.style)}.png`, data: order.fullImageBuffer }];
+  const main = await deliverableImage(order, order.fullImageBuffer);
+  const files = [{ name: `photopro-1-${slug(order.style)}.${main.ext}`, data: main.data }];
   if (Array.isArray(order.bumpImages)) {
-    order.bumpImages.forEach((img, i) => {
-      files.push({ name: `photopro-${i + 2}-${slug(img.style)}.png`, data: img.imageBuffer });
-    });
+    for (let i = 0; i < order.bumpImages.length; i++) {
+      const img = order.bumpImages[i];
+      const out = await deliverableImage(order, img.imageBuffer);
+      files.push({ name: `photopro-${i + 2}-${slug(img.style)}.${out.ext}`, data: out.data });
+    }
   }
 
   try {
@@ -264,9 +284,10 @@ router.get('/orders/:id/download/bump/:index', async (req, res) => {
   }
   const img = order.bumpImages[idx];
   const safeName = img.style.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-');
-  res.setHeader('Content-Type', 'image/png');
-  res.setHeader('Content-Disposition', `attachment; filename="photopro-${safeName}.png"`);
-  res.send(img.imageBuffer);
+  const out = await deliverableImage(order, img.imageBuffer);
+  res.setHeader('Content-Type', out.mime);
+  res.setHeader('Content-Disposition', `attachment; filename="photopro-${safeName}.${out.ext}"`);
+  res.send(out.data);
 });
 
 // ---------------------------------------------------------------------------
@@ -310,14 +331,15 @@ router.post('/orders/:id/payments', async (req, res) => {
   try {
     const publicUrl = req.app.get('publicUrl');
     const result = await mercadoPagoService.createDirectPayment(order, req.body || {}, publicUrl);
-    // Só marcamos o bump como comprado depois que a MP aceitou criar o
-    // pagamento com esse valor (result.bumpPurchased reflete o que foi
-    // efetivamente cobrado — nunca o que o front-end pediu). A geração das
-    // 4 fotos extras só acontece depois, quando o webhook confirmar o
-    // pagamento aprovado (ver routes/webhooks.js).
-    if (result.bumpPurchased) {
-      orderStore.updateOrder(order.id, { bumpPurchased: true });
-    }
+    // Persistimos pacote/HQ só depois que a MP aceitou criar o pagamento com
+    // esse valor exato (result.* reflete o que foi efetivamente cobrado —
+    // nunca o que o front-end pediu). A geração das fotos extras só acontece
+    // quando o webhook confirmar a aprovação (ver routes/webhooks.js).
+    orderStore.updateOrder(order.id, {
+      package: result.package,
+      hqPurchased: result.hqPurchased,
+      bumpPurchased: result.package !== 'inicial',
+    });
     res.json(result);
   } catch (err) {
     console.error(`[order ${order.id}] erro ao criar pagamento direto (Brick):`, err);

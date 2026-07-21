@@ -2,12 +2,37 @@ const crypto = require('crypto');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 
 const PRICE_BRL = Number(process.env.PRICE_BRL || 9.9);
-// Order bump "Pacote Premium" — desbloqueia os outros 4 estilos do
-// catálogo (ver prompts.js) por um adicional fixo. O valor cobrado é
-// SEMPRE calculado aqui no servidor a partir do flag booleano `bump`
-// vindo do front-end — nunca confiamos num valor de preço enviado pelo
-// cliente, pra não abrir brecha de manipulação do total pago.
-const BUMP_PRICE_BRL = Number(process.env.BUMP_PRICE_BRL || 9.9);
+
+// ---------------------------------------------------------------------------
+// Pacotes — a escolha principal do cliente na tela de resultado.
+// O valor cobrado é SEMPRE resolvido aqui a partir do ID do pacote vindo do
+// front-end — nunca confiamos num preço enviado pelo cliente, pra não abrir
+// brecha de manipulação do total pago.
+//   inicial: 1 foto (o estilo escolhido)
+//   premium: 4 fotos (escolhido + 3 do catálogo) — "mais escolhido"
+//   deluxe:  10 fotos (premium + Blazer premium + 5 fotos de sessão de
+//            estúdio exclusivas) — ver getExtraStylesForPackage em prompts.js
+// ---------------------------------------------------------------------------
+const PACKAGES = {
+  inicial: { price: Number(process.env.PRICE_INICIAL_BRL || 9.9),  title: 'PhotoPRO — Pacote Inicial (1 foto profissional)' },
+  premium: { price: Number(process.env.PRICE_PREMIUM_BRL || 24.9), title: 'PhotoPRO — Pacote Premium (4 fotos profissionais)' },
+  deluxe:  { price: Number(process.env.PRICE_DELUXE_BRL || 79.9),  title: 'PhotoPRO — Deluxe Estúdio™ (sessão com 10 fotos)' },
+};
+function resolvePackage(id) {
+  return PACKAGES[id] ? id : 'inicial';
+}
+
+// Upgrade pós-compra: quem levou o Inicial pode completar o Premium pagando
+// só a diferença (24,90 − 9,90). Nunca cobra a foto base de novo.
+const UPGRADE_PRICE_BRL = Number((PACKAGES.premium.price - PACKAGES.inicial.price).toFixed(2));
+
+// Bump do checkout: download em qualidade máxima (PNG sem compressão).
+// Sem ele, os downloads saem em JPEG otimizado — diferença REAL, ver as
+// rotas de download em routes/orders.js.
+const HQ_PRICE_BRL = Number(process.env.HQ_PRICE_BRL || 2.9);
+
+// Mantido só para compatibilidade de leitura em código antigo.
+const BUMP_PRICE_BRL = UPGRADE_PRICE_BRL;
 
 let _client = null;
 function getClient() {
@@ -88,38 +113,39 @@ async function createDirectPayment(order, formData, publicUrl) {
     throw err;
   }
 
-  // Order bump "Pacote Premium": o total cobrado é calculado 100% aqui —
-  // `formData.bump` é só um booleano ("o cliente marcou a caixinha?"), nunca
-  // um valor em R$. Ver BUMP_PRICE_BRL no topo do arquivo.
-  const bumpSelected = formData.bump === true;
-  const transactionAmount = bumpSelected ? PRICE_BRL + BUMP_PRICE_BRL : PRICE_BRL;
+  // Pacote + bump HQ: o total é calculado 100% aqui a partir de IDs/booleanos
+  // (`formData.package` e `formData.hq`) — nunca de um valor em R$ vindo do
+  // cliente. Um `package` desconhecido/ausente vira 'inicial' (o mais barato):
+  // errar pra baixo nunca cobra a mais de ninguém.
+  const packageId = resolvePackage(formData.package);
+  const hqSelected = formData.hq === true;
+  const pkg = PACKAGES[packageId];
+  const transactionAmount = Number((pkg.price + (hqSelected ? HQ_PRICE_BRL : 0)).toFixed(2));
 
   const items = [
     {
-      id: order.id,
-      title: 'PhotoPRO — Foto profissional gerada por IA',
-      description: `Foto profissional gerada por IA no estilo ${order.style}`,
+      id: `${order.id}-${packageId}`,
+      title: pkg.title,
+      description: `Estilo principal: ${order.style}`,
       category_id: 'services',
       quantity: 1,
-      unit_price: PRICE_BRL,
+      unit_price: pkg.price,
     },
   ];
-  if (bumpSelected) {
+  if (hqSelected) {
     items.push({
-      id: `${order.id}-bump`,
-      title: 'PhotoPRO — Pacote Premium (4 estilos adicionais)',
-      description: 'Desbloqueio das outras 4 variações de estilo geradas por IA',
+      id: `${order.id}-hq`,
+      title: 'PhotoPRO — Download em qualidade máxima (PNG)',
+      description: 'Arquivos PNG originais sem compressão',
       category_id: 'services',
       quantity: 1,
-      unit_price: BUMP_PRICE_BRL,
+      unit_price: HQ_PRICE_BRL,
     });
   }
 
   const body = {
     transaction_amount: transactionAmount,
-    description: bumpSelected
-      ? `PhotoPRO — Foto profissional (${order.style}) + Pacote Premium`
-      : `PhotoPRO — Foto profissional (${order.style})`,
+    description: `${pkg.title} — estilo ${order.style}${hqSelected ? ' + download HQ' : ''}`,
     payment_method_id: formData.payment_method_id,
     payer: formData.payer,
     external_reference: order.id,
@@ -184,10 +210,10 @@ async function createDirectPayment(order, formData, publicUrl) {
     status: result.status,
     statusDetail: result.status_detail,
     paymentMethodId: result.payment_method_id,
-    // devolvido pro caller (routes/orders.js) persistir order.bumpPurchased
-    // só depois que o pagamento foi de fato criado com esse valor — nunca
-    // marcamos o bump como comprado antes de confirmar que a MP aceitou.
-    bumpPurchased: bumpSelected,
+    // devolvidos pro caller (routes/orders.js) persistir no pedido só depois
+    // que a MP aceitou criar o pagamento com esse valor exato.
+    package: packageId,
+    hqPurchased: hqSelected,
     amount: transactionAmount,
   };
 
@@ -204,10 +230,10 @@ async function createDirectPayment(order, formData, publicUrl) {
 }
 
 /**
- * Cria o pagamento do upsell pós-compra "Pacote Premium" — cobrado
- * separadamente, DEPOIS que o pedido base já foi pago e entregue (cliente
- * viu a foto, decidiu voltar e desbloquear os outros 4 estilos). Cobra
- * SÓ o valor do bump (nunca o preço da foto base de novo).
+ * Upgrade pós-compra Inicial → Premium — cobrado separadamente, DEPOIS que
+ * o pedido base já foi pago e entregue (cliente viu a foto, decidiu voltar
+ * e completar o pacote). Cobra SÓ a diferença de preço entre os pacotes
+ * (UPGRADE_PRICE_BRL) — nunca a foto base de novo.
  *
  * external_reference recebe o sufixo ":upsell" pra o webhook (ver
  * routes/webhooks.js) saber diferenciar isto de um pagamento do pedido
@@ -228,8 +254,8 @@ async function createUpsellPayment(order, formData, publicUrl) {
   }
 
   const body = {
-    transaction_amount: BUMP_PRICE_BRL,
-    description: `PhotoPRO — Pacote Premium (upsell pos-compra, pedido ${order.id})`,
+    transaction_amount: UPGRADE_PRICE_BRL,
+    description: `PhotoPRO — Upgrade para Pacote Premium (pedido ${order.id})`,
     payment_method_id: formData.payment_method_id,
     payer: formData.payer,
     external_reference: `${order.id}:upsell`,
@@ -239,11 +265,11 @@ async function createUpsellPayment(order, formData, publicUrl) {
       items: [
         {
           id: `${order.id}-upsell`,
-          title: 'PhotoPRO — Pacote Premium (4 estilos adicionais)',
-          description: 'Desbloqueio pos-compra das outras 4 variacoes de estilo geradas por IA',
+          title: 'PhotoPRO — Upgrade para Pacote Premium (3 fotos adicionais)',
+          description: 'Completa o Pacote Premium pagando so a diferenca entre os pacotes',
           category_id: 'services',
           quantity: 1,
-          unit_price: BUMP_PRICE_BRL,
+          unit_price: UPGRADE_PRICE_BRL,
         },
       ],
       payer: {
@@ -286,7 +312,7 @@ async function createUpsellPayment(order, formData, publicUrl) {
     status: result.status,
     statusDetail: result.status_detail,
     paymentMethodId: result.payment_method_id,
-    amount: BUMP_PRICE_BRL,
+    amount: UPGRADE_PRICE_BRL,
   };
 
   const txData = result.point_of_interaction?.transaction_data;
@@ -337,4 +363,8 @@ module.exports = {
   verifyWebhookSignature,
   PRICE_BRL,
   BUMP_PRICE_BRL,
+  PACKAGES,
+  resolvePackage,
+  UPGRADE_PRICE_BRL,
+  HQ_PRICE_BRL,
 };

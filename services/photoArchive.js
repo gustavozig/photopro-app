@@ -49,6 +49,8 @@ async function saveOrder(order) {
       style: order.style,
       createdAt: order.createdAt,
       archivedAt: Date.now(),
+      package: order.package || (order.bumpPurchased ? 'premium' : 'inicial'),
+      hqPurchased: !!order.hqPurchased,
       bumpPurchased: !!order.bumpPurchased,
       bumpStyles: Array.isArray(order.bumpImages) ? order.bumpImages.map((b) => b.style) : [],
     };
@@ -88,6 +90,10 @@ async function loadOrder(orderId) {
       style: meta.style,
       status: 'paid',
       createdAt: meta.createdAt,
+      package: meta.package || (meta.bumpPurchased ? 'premium' : 'inicial'),
+      // legado: quem comprou antes do bump HQ existir sempre baixou PNG —
+      // meta antiga sem o campo mantém PNG (nunca rebaixar produto já vendido)
+      hqPurchased: meta.hqPurchased === undefined ? true : !!meta.hqPurchased,
       previewStatus: 'ready',
       previewImageBuffer: null,
       fullImageBuffer,
