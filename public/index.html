@@ -739,6 +739,34 @@ body.overlay-active .marquee-track{animation-play-state:paused;}
   font-size:11px;color:var(--muted-2);text-align:center;margin:14px 0 0;
   display:flex;align-items:center;justify-content:center;gap:6px;line-height:1.4;
 }
+/* Caixa "salve o link do seu pedido", mostrada so depois do pagamento.
+   Existe porque a recuperacao automatica depende do localStorage do mesmo
+   navegador - quem paga no celular e volta no computador (ou limpa o
+   navegador) ficava sem nenhuma forma de reencontrar a foto que comprou.
+   Aconteceu de verdade: o cliente refazia o fluxo, caia num pedido novo e a
+   tela pedia pagamento outra vez. Este link e a saida independente de
+   aparelho. */
+.order-link-box{
+  display:none;margin-top:14px;padding:14px;border-radius:12px;
+  background:rgba(47,227,139,.06);border:1px solid rgba(47,227,139,.28);
+}
+.order-link-title{
+  font-size:13px;font-weight:700;color:var(--text);margin:0 0 4px;
+  display:flex;align-items:center;gap:6px;
+}
+.order-link-desc{font-size:12px;color:var(--muted);margin:0 0 10px;line-height:1.45;}
+.order-link-row{display:flex;gap:8px;align-items:stretch;}
+.order-link-input{
+  flex:1;min-width:0;font-size:12px;padding:10px 12px;border-radius:8px;
+  border:1px solid var(--stroke);background:var(--bg);color:var(--muted);
+  font-family:inherit;text-overflow:ellipsis;
+}
+.order-link-copy{
+  flex:0 0 auto;padding:10px 16px;border-radius:8px;border:none;cursor:pointer;
+  background:var(--brand);color:#08130d;font-weight:700;font-size:12px;
+  font-family:inherit;white-space:nowrap;min-height:40px;
+}
+.order-link-copy.done{background:#2FE38B;}
 .result-col{display:flex;flex-direction:column;gap:10px;}
 .price-old{color:var(--muted-2);text-decoration:line-through;font-size:16px;}
 .price-row{display:flex;align-items:baseline;gap:10px;margin:6px 0 4px;flex-wrap:wrap;}
@@ -1392,6 +1420,18 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
             <button class="btn btn-primary btn-block" id="downloadAllBtn" style="display:none;margin-top:10px;">Baixar todas as fotos (ZIP)</button>
             <button class="btn btn-ghost btn-block" id="downloadBtn" style="display:none;margin-top:10px;">Baixar só esta foto</button>
             <p class="price-trust-note" id="downloadExpiryNote" style="display:none;color:var(--muted);">✓ Suas fotos ficam disponíveis para download por 7 dias.</p>
+
+            <!-- Link permanente do pedido. Aparece junto com os botões de
+                 download (ver revealPaidResult) e permite reabrir a compra em
+                 qualquer aparelho, sem depender do localStorage. -->
+            <div class="order-link-box" id="orderLinkBox">
+              <p class="order-link-title">🔗 Salve o link das suas fotos</p>
+              <p class="order-link-desc">Guarde este link para voltar às suas fotos de qualquer celular ou computador, sem pagar de novo. Ele vale por 7 dias.</p>
+              <div class="order-link-row">
+                <input class="order-link-input" id="orderLinkInput" type="text" readonly aria-label="Link das suas fotos">
+                <button class="order-link-copy" id="orderLinkCopyBtn" type="button">Copiar</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -3084,12 +3124,56 @@ function fillLoopTrack(track, buildOneCopyHtml){
     // "Baixar todas" só faz sentido pra quem tem mais de uma foto (Pacote Premium)
     var dlAllBtn = document.getElementById('downloadAllBtn');
     if(dlAllBtn) dlAllBtn.style.display = lastBumpReady ? 'block' : 'none';
+    mostrarLinkDoPedido();
     var resultImgWrap = document.querySelector('#resultFrame .result-img');
     if(resultImgWrap && lastFullImage){
       resultImgWrap.innerHTML = '<img src="'+lastFullImage+'" alt="Sua foto profissional">';
     }
     closeModal();
   }
+
+  // ---- link permanente do pedido ----
+  // O cliente que paga precisa de uma forma de voltar às fotos que não dependa
+  // do navegador em que comprou. Este link carrega o pedido pelo id na URL
+  // (ver handlePaymentReturnFromUrl), então funciona em qualquer aparelho
+  // enquanto o pedido existir no servidor (7 dias).
+  function montarLinkDoPedido(orderId){
+    return window.location.origin + '/?pedido=' + encodeURIComponent(orderId);
+  }
+  function mostrarLinkDoPedido(){
+    if(!currentOrderId) return;
+    var box = document.getElementById('orderLinkBox');
+    var input = document.getElementById('orderLinkInput');
+    if(!box || !input) return;
+    input.value = montarLinkDoPedido(currentOrderId);
+    box.style.display = 'block';
+  }
+  (function ligarBotaoCopiarLink(){
+    var btn = document.getElementById('orderLinkCopyBtn');
+    var input = document.getElementById('orderLinkInput');
+    if(!btn || !input) return;
+    btn.addEventListener('click', function(){
+      var texto = input.value;
+      var marcarCopiado = function(){
+        btn.textContent = 'Copiado!';
+        btn.classList.add('done');
+        setTimeout(function(){ btn.textContent = 'Copiar'; btn.classList.remove('done'); }, 2000);
+      };
+      // navigator.clipboard não existe em http nem em parte dos navegadores
+      // in-app (Instagram/Facebook), que são ~88% do nosso tráfego — por isso
+      // o fallback com select()+execCommand, que funciona nesses casos.
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(texto).then(marcarCopiado, function(){
+          input.select(); document.execCommand('copy'); marcarCopiado();
+        });
+      } else {
+        input.select();
+        input.setSelectionRange(0, 99999);
+        try{ document.execCommand('copy'); }catch(e){}
+        marcarCopiado();
+      }
+    });
+  })();
 
   // ---- loading pós-pagamento ----
   // Só é exibido depois que o pagamento é confirmado. É neste momento que a
@@ -3239,15 +3323,29 @@ function fillLoopTrack(track, buildOneCopyHtml){
     }, 2500);
   }
 
-  // ---- volta do checkout do Mercado Pago (back_urls) ----
+  // ---- volta do checkout do Mercado Pago (back_urls) e link salvo ----
+  // Dois casos entram aqui:
+  //   ?order=<id>&payment=success  -> retorno do Mercado Pago
+  //   ?pedido=<id>                 -> link que o próprio cliente salvou
+  // O segundo existe porque a recuperação por localStorage só funciona no
+  // mesmo navegador. Um cliente pagou no celular, voltou no computador, não
+  // achou a foto, refez o fluxo e a tela pediu pagamento de novo — parecia
+  // cobrança dupla. Com o link, ele reabre a compra em qualquer aparelho.
   var handledOrderFromUrl = false;
   (function handlePaymentReturnFromUrl(){
     var params = new URLSearchParams(window.location.search);
-    var orderId = params.get('order');
+    var savedOrderId = params.get('pedido');
+    var orderId = params.get('order') || savedOrderId;
     var paymentStatus = params.get('payment');
     if(!orderId) return;
 
     handledOrderFromUrl = true;
+
+    // Link salvo: não passou pelo checkout agora, então é só reabrir o pedido.
+    if(savedOrderId && !params.get('order')){
+      abrirPedidoSalvo(savedOrderId);
+      return;
+    }
     currentOrderId = orderId;
     openAppOverlay();
     goTo(4);
@@ -3263,6 +3361,40 @@ function fillLoopTrack(track, buildOneCopyHtml){
     }
   })();
 
+  // Reabre um pedido já pago a partir do link que o cliente salvou.
+  // Mesma lógica da recuperação por localStorage, mas disparada pela URL —
+  // por isso funciona em outro aparelho/navegador.
+  function abrirPedidoSalvo(orderId){
+    currentOrderId = orderId;
+    openAppOverlay();
+    goTo(4);
+    showGeneratingState();
+
+    fetch('/api/orders/' + orderId)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        hideGeneratingState();
+        if(data.status === 'paid' && data.fullImage){
+          lastFullImage = data.fullImage;
+          saveOrderForRecovery(orderId); // passa a valer também neste aparelho
+          revealPaidResult();
+          if(data.bumpPurchased){
+            pollBumpGallery(orderId);
+          } else {
+            showUpsellOffer();
+          }
+        } else {
+          closeAppOverlay();
+          alert('Não encontramos este pedido. As fotos ficam disponíveis por 7 dias após a compra — se já passou desse prazo, fale com o suporte informando o número do pedido: ' + orderId);
+        }
+      })
+      .catch(function(){
+        hideGeneratingState();
+        closeAppOverlay();
+        alert('Não conseguimos carregar seu pedido agora. Verifique sua conexão e tente abrir o link novamente.');
+      });
+  }
+
   // ---- recuperação automática após refresh acidental ----
   // Se o cliente já pagou e atualizar a página sem querer, a foto some da
   // tela (só existia numa variável JS). Pra evitar isso, guardamos o ID do
@@ -3271,10 +3403,10 @@ function fillLoopTrack(track, buildOneCopyHtml){
   // página, checamos aqui se existe um pedido salvo pra reabrir o
   // resultado sozinho — sem o cliente precisar fazer nada.
   //
-  // Só funciona no mesmo navegador/dispositivo e enquanto o pedido ainda
-  // existir no servidor. O backend guarda cada pedido por só 2 horas (ver
-  // ORDER_TTL_MS em services/orderStore.js) e depois apaga a foto de
-  // propósito, por segurança — não é um bug, é a política de retenção.
+  // Só funciona no mesmo navegador/dispositivo. Para outros aparelhos existe
+  // o link salvo (?pedido=<id>), montado em mostrarLinkDoPedido(). As fotos
+  // pagas ficam 7 dias no disco (ver services/photoArchive.js); a selfie
+  // original é apagada em até 2h (ORDER_TTL_MS em services/orderStore.js).
   // Se a recuperação falhar (pedido já expirado), avisamos isso de forma
   // clara em vez de mandar o cliente "falar com o suporte".
   var ORDER_RECOVERY_KEY = 'photopro_recover_order';
