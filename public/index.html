@@ -349,16 +349,46 @@ section{padding:80px 0;}
   padding:36px;position:relative;
 }
 @media (max-width:640px){.app-shell{padding:20px;border-radius:18px;}}
-.steps-row{display:flex;justify-content:center;gap:6px;margin-bottom:32px;flex-wrap:wrap;}
-.step-pill{
-  display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted-2);
-  padding:6px 12px;border-radius:999px;border:1px solid var(--border);
+/* Indicador de progresso (NÃO é botão). Uma usuária idosa em teste clicava
+   nas pílulas verdes achando que avançavam — elas eram idênticas ao botão
+   de ação. Agora é um stepper: bolinhas numeradas ligadas por uma linha,
+   sem borda/fundo de botão, cursor default e pointer-events:none pra não
+   dar nenhuma pista de clique. O verde marca só a etapa ATUAL. */
+.steps-row{
+  display:flex;justify-content:center;align-items:flex-start;gap:0;
+  margin-bottom:26px;pointer-events:none;user-select:none;
 }
-.step-pill.active{color:var(--green);border-color:rgba(47,227,139,.4);background:var(--green-soft);}
+.step-pill{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  font-size:11px;font-weight:600;color:var(--muted-2);text-align:center;
+  position:relative;flex:1;max-width:120px;cursor:default;
+}
+/* linha ligando as etapas (fica atrás das bolinhas) */
+.step-pill:not(:last-child)::after{
+  content:'';position:absolute;top:12px;left:50%;width:100%;height:2px;
+  background:var(--border);z-index:0;
+}
+.step-pill.done:not(:last-child)::after{background:var(--green);}
+.step-num{
+  width:26px;height:26px;border-radius:50%;background:var(--card);
+  border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;color:var(--muted-2);position:relative;z-index:1;
+}
+.step-pill.active .step-num{background:var(--green);border-color:var(--green);color:#04140c;box-shadow:0 0 0 4px var(--green-soft);}
+.step-pill.done .step-num{background:var(--green);border-color:var(--green);color:#04140c;}
+.step-pill.active{color:var(--green);font-weight:800;}
 .step-pill.done{color:var(--text);}
-.step-num{width:16px;height:16px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;}
-.step-pill.active .step-num, .step-pill.done .step-num{background:var(--green);color:#04140c;}
+@media (max-width:640px){.step-pill{font-size:10px;}.step-num{width:24px;height:24px;}}
 
+/* Título instrucional no topo de cada etapa — diz em uma frase exatamente
+   o que fazer e qual botão tocar. Nasceu de um teste com usuária idosa que
+   não sabia como progredir. */
+.panel-heading{
+  font-size:16px;font-weight:700;color:var(--text);text-align:center;
+  margin:0 0 18px;line-height:1.4;
+}
+.panel-heading b{color:var(--green);white-space:nowrap;}
+@media (max-width:640px){.panel-heading{font-size:14px;}.panel-heading b{white-space:normal;}}
 .app-panel{display:none;}
 .app-panel.visible{display:block;animation:fadein .35s ease;}
 @keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
@@ -1337,6 +1367,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
 
       <!-- STEP 1: quality check -->
       <div class="app-panel visible" data-panel="1">
+        <h3 class="panel-heading">Sua foto está boa? Confira e toque em <b>“Minha foto está boa”</b></h3>
         <div class="quality-thumb-row">
           <div class="quality-thumb" id="qualityThumb"></div>
           <div>
@@ -1368,12 +1399,13 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
         </div>
         <div class="panel-actions">
           <button class="btn btn-ghost" id="retakeBtn">Trocar foto</button>
-          <button class="btn btn-primary" id="toStep2FromQuality">Minha foto está boa</button>
+          <button class="btn btn-primary" id="toStep2FromQuality">Minha foto está boa →</button>
         </div>
       </div>
 
       <!-- STEP 2: style -->
       <div class="app-panel" data-panel="2">
+        <h3 class="panel-heading">Toque em um estilo e depois em <b>“Gerar minha foto”</b></h3>
         <div class="style-grid">
           <div class="style-card" data-style="Executivo(a)">
             <div class="style-swatch">
@@ -1418,7 +1450,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
         </div>
         <div class="panel-actions">
           <button class="btn btn-ghost" data-back="1">Voltar</button>
-          <button class="btn btn-primary" id="toStep3" disabled>Gerar minha foto</button>
+          <button class="btn btn-primary" id="toStep3" disabled>Gerar minha foto →</button>
         </div>
       </div>
 
@@ -2071,7 +2103,13 @@ function fillLoopTrack(track, buildOneCopyHtml){
   // ---- style selection (step 2) ----
   var styleCards = document.querySelectorAll('.style-card');
   var toStep3 = document.getElementById('toStep3');
-  var selectedStyleName = null;
+  // Primeiro estilo pré-selecionado: o botão "Gerar minha foto" já nasce
+  // ativo, sem exigir que o usuário descubra que precisa escolher antes
+  // (teste com usuária idosa travava num botão desabilitado). Diferente dos
+  // PACOTES, que são decisão de preço e vêm sem seleção — aqui a escolha é
+  // de baixo risco e todo mundo quer gerar alguma foto.
+  var selectedStyleName = styleCards.length ? styleCards[0].dataset.style : null;
+  if(styleCards.length){ styleCards[0].classList.add('selected'); toStep3.disabled = false; }
   styleCards.forEach(function(c){
     c.addEventListener('click', function(){
       styleCards.forEach(function(x){x.classList.remove('selected');});
@@ -2634,8 +2672,14 @@ function fillLoopTrack(track, buildOneCopyHtml){
     closeAppOverlay();
     resetHeroDropzone();
     styleCards.forEach(function(x){x.classList.remove('selected');});
-    selectedStyleName = null;
-    toStep3.disabled = true;
+    if(styleCards.length){
+      styleCards[0].classList.add('selected');
+      selectedStyleName = styleCards[0].dataset.style;
+      toStep3.disabled = false;
+    } else {
+      selectedStyleName = null;
+      toStep3.disabled = true;
+    }
     currentOrderId = null;
     lastFullImage = null;
     lastBumpReady = false;
