@@ -368,16 +368,19 @@ section{padding:80px 0;}
   content:'';position:absolute;top:12px;left:50%;width:100%;height:2px;
   background:var(--border);z-index:0;
 }
-.step-pill.done:not(:last-child)::after{background:var(--green);}
+.step-pill.done:not(:last-child)::after{background:var(--muted-2);}
 .step-num{
   width:26px;height:26px;border-radius:50%;background:var(--card);
   border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
   font-size:12px;font-weight:800;color:var(--muted-2);position:relative;z-index:1;
 }
-.step-pill.active .step-num{background:var(--green);border-color:var(--green);color:#04140c;box-shadow:0 0 0 4px var(--green-soft);}
-.step-pill.done .step-num{background:var(--green);border-color:var(--green);color:#04140c;}
-.step-pill.active{color:var(--green);font-weight:800;}
-.step-pill.done{color:var(--text);}
+/* Etapa atual em BRANCO (não verde): o verde estava chamando atenção
+   demais e ainda parecia botão. Neutro comunica "você está aqui" sem
+   competir com o botão de ação verde. */
+.step-pill.active .step-num{background:var(--text);border-color:var(--text);color:var(--bg);}
+.step-pill.done .step-num{background:var(--muted-2);border-color:var(--muted-2);color:var(--bg);}
+.step-pill.active{color:var(--text);font-weight:800;}
+.step-pill.done{color:var(--muted);}
 @media (max-width:640px){.step-pill{font-size:10px;}.step-num{width:24px;height:24px;}}
 
 /* Título instrucional no topo de cada etapa — diz em uma frase exatamente
@@ -1367,7 +1370,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
 
       <!-- STEP 1: quality check -->
       <div class="app-panel visible" data-panel="1">
-        <h3 class="panel-heading">Sua foto está boa? Confira e toque em <b>“Minha foto está boa”</b></h3>
+        <h3 class="panel-heading">Confirme se sua foto está boa</h3>
         <div class="quality-thumb-row">
           <div class="quality-thumb" id="qualityThumb"></div>
           <div>
@@ -1405,7 +1408,7 @@ footer{border-top:1px solid var(--border);padding:48px 0 28px;background:var(--b
 
       <!-- STEP 2: style -->
       <div class="app-panel" data-panel="2">
-        <h3 class="panel-heading">Toque em um estilo e depois em <b>“Gerar minha foto”</b></h3>
+        <h3 class="panel-heading">Escolha um estilo</h3>
         <div class="style-grid">
           <div class="style-card" data-style="Executivo(a)">
             <div class="style-swatch">
